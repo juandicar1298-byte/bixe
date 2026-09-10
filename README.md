@@ -237,11 +237,40 @@ Para rehacer los dibujos (por ejemplo si cambias los colores de la marca):
 Puedes reemplazar cualquiera de esos PNG por una foto tuya con el mismo
 nombre, o simplemente subir la que quieras desde el panel.
 
+## Animación de carga
+
+Hay dos, una para cada espera distinta.
+
+**La cortina de entrada.** Al abrir el sitio, una pantalla en negro monta el
+logotipo letra a letra mientras una barra sigue la carga real de la página; en
+cuanto todo está listo se parte por la mitad y se abre como un telón. Sale una
+sola vez por pestaña, así que moverse entre secciones no la repite. Para verla
+otra vez sin abrir una pestaña nueva, se entra con **`?intro`** al final de la
+dirección (`http://localhost:5173/?intro`).
+
+La barra no llega al 100% hasta que el navegador termina de cargar la página y
+las tipografías. Aun así hay dos redes de seguridad —a los 4 y a los 8
+segundos— porque una animación de adorno no puede dejar el sitio inservible si
+algo se cuelga. Por lo mismo el avance va con temporizadores y no con
+`requestAnimationFrame`: en una pestaña que el navegador no está dibujando, rAF
+no se ejecuta nunca y la cortina se quedaría puesta para siempre.
+
+**El mosaico.** Mientras la API responde, el catálogo y los servicios muestran
+la silueta de las tarjetas que están por llegar: piezas de distinta altura
+repartidas en columnas, con un brillo que las recorre. Al llegar los datos, las
+tarjetas reales entran con el mismo movimiento que traían los huecos, así que
+el relevo no se nota ni da saltos de maquetación.
+
+Quien tenga activado «reducir movimiento» en su sistema operativo no ve ninguna
+de las dos: la cortina ni siquiera se monta y el resto de animaciones quedan en
+nada.
+
 ## Pruebas de la API
 
 En `backend-fastapi/postman/` hay una colección lista para importar en Postman,
-con 39 peticiones que cubren GET, POST, PUT, PATCH y DELETE, incluidos los
-casos de error (401 sin token, 403 sin permiso, 404, 409 y 422).
+con 57 peticiones repartidas en 10 carpetas, que cubren GET, POST, PUT, PATCH
+y DELETE, incluidos los casos de error (401 sin token, 403 sin permiso, 404,
+409 y 422).
 
 Ejecuta primero **«Login (Administrador)»**: guarda el token en una variable de
 la colección y el resto de peticiones salen ya autenticadas.

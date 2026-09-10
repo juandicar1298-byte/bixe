@@ -7,6 +7,7 @@ import { useCarrito } from '../context/carritoContexto';
 import { obtenerProductos, obtenerServiciosApi } from '../services/api';
 import { formatearPrecio, formatearDuracion, resolverImagen } from '../utils/formato';
 import { IconoFlecha, IconoReloj, IconoCarrito } from '../components/ui/Iconos';
+import { RejillaEsqueleto } from '../components/ui/RejillaEsqueleto';
 
 const CIFRAS = [
   { valor: '300+', etiqueta: 'Modelos' },
@@ -18,12 +19,17 @@ const CIFRAS = [
 export const Index = () => {
   const [productos, setProductos] = useState([]);
   const [servicios, setServicios] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const { agregar } = useCarrito();
 
   useEffect(() => {
     // La portada muestra lo que realmente está publicado en el panel.
-    obtenerProductos().then(setProductos).catch(() => setProductos([]));
-    obtenerServiciosApi().then(setServicios).catch(() => setServicios([]));
+    // Se espera a las dos peticiones para que las dos rejillas dejen de
+    // cargar a la vez y la página no dé un salto en dos tiempos.
+    Promise.all([
+      obtenerProductos().then(setProductos).catch(() => setProductos([])),
+      obtenerServiciosApi().then(setServicios).catch(() => setServicios([])),
+    ]).finally(() => setCargando(false));
   }, []);
 
   const destacados = productos.slice(0, 4);
@@ -62,7 +68,9 @@ export const Index = () => {
           </Link>
         </div>
 
-        {destacados.length === 0 ? (
+        {cargando ? (
+          <RejillaEsqueleto cantidad={4} columnas={4} etiqueta="Cargando modelos destacados…" />
+        ) : destacados.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-line bg-surface px-6 py-20 text-center">
             <p className="text-ink-mute">
               Aún no hay modelos publicados. Agrégalos desde el panel de administración.
@@ -78,7 +86,7 @@ export const Index = () => {
                   key={producto.id}
                   to={`/modelos/${producto.id}`}
                   style={{ animationDelay: `${indice * 70}ms` }}
-                  className="tarjeta tarjeta-hover group overflow-hidden animate-subir"
+                  className="tarjeta tarjeta-hover group overflow-hidden animate-mosaico"
                 >
                   <div className="h-56 overflow-hidden bg-canvas">
                     {imagen ? (
@@ -120,7 +128,7 @@ export const Index = () => {
       </section>
 
       {/* --- Servicios --- */}
-      {serviciosDestacados.length > 0 && (
+      {(cargando || serviciosDestacados.length > 0) && (
         <section className="border-y border-line bg-surface">
           <div className="mx-auto max-w-7xl px-6 py-20 md:px-8 md:py-28">
             <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
@@ -141,54 +149,58 @@ export const Index = () => {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {serviciosDestacados.map((servicio) => {
-                const duracion = formatearDuracion(servicio.duracion_min);
+            {cargando ? (
+              <RejillaEsqueleto cantidad={3} columnas={3} etiqueta="Cargando servicios…" />
+            ) : (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                {serviciosDestacados.map((servicio) => {
+                  const duracion = formatearDuracion(servicio.duracion_min);
 
-                return (
-                  <article key={servicio.id} className="tarjeta tarjeta-hover flex flex-col p-6">
-                    <span className="insignia insignia-marca w-fit capitalize">
-                      {servicio.categoria}
-                    </span>
-
-                    <h3 className="titular mt-3 text-2xl">{servicio.nombre}</h3>
-
-                    {duracion && (
-                      <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-mute">
-                        <IconoReloj className="h-3.5 w-3.5" />
-                        {duracion} aprox.
-                      </p>
-                    )}
-
-                    <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">
-                      {servicio.descripcion}
-                    </p>
-
-                    <div className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-5">
-                      <span className="titular text-2xl tabular-nums">
-                        {formatearPrecio(servicio.precio)}
+                  return (
+                    <article key={servicio.id} className="tarjeta tarjeta-hover flex flex-col p-6">
+                      <span className="insignia insignia-marca w-fit capitalize">
+                        {servicio.categoria}
                       </span>
 
-                      <button
-                        onClick={() =>
-                          agregar({
-                            tipo: 'servicio',
-                            id: servicio.id,
-                            nombre: servicio.nombre,
-                            precio: servicio.precio,
-                            imagenUrl: servicio.imagen_url,
-                          })
-                        }
-                        className="btn btn-primario"
-                      >
-                        <IconoCarrito className="h-4 w-4" />
-                        Agregar
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                      <h3 className="titular mt-3 text-2xl">{servicio.nombre}</h3>
+
+                      {duracion && (
+                        <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-mute">
+                          <IconoReloj className="h-3.5 w-3.5" />
+                          {duracion} aprox.
+                        </p>
+                      )}
+
+                      <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">
+                        {servicio.descripcion}
+                      </p>
+
+                      <div className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-5">
+                        <span className="titular text-2xl tabular-nums">
+                          {formatearPrecio(servicio.precio)}
+                        </span>
+
+                        <button
+                          onClick={() =>
+                            agregar({
+                              tipo: 'servicio',
+                              id: servicio.id,
+                              nombre: servicio.nombre,
+                              precio: servicio.precio,
+                              imagenUrl: servicio.imagen_url,
+                            })
+                          }
+                          className="btn btn-primario"
+                        >
+                          <IconoCarrito className="h-4 w-4" />
+                          Agregar
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       )}

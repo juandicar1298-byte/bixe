@@ -6,6 +6,7 @@ import { useCarrito } from '../context/carritoContexto';
 import { obtenerServiciosApi } from '../services/api';
 import { formatearPrecio, formatearDuracion, resolverImagen } from '../utils/formato';
 import { IconoReloj, IconoCarrito } from '../components/ui/Iconos';
+import { RejillaEsqueleto } from '../components/ui/RejillaEsqueleto';
 
 export const Servicios = () => {
   const [servicios, setServicios] = useState([]);
@@ -73,7 +74,6 @@ export const Servicios = () => {
           </div>
         )}
 
-        {cargando && <p className="py-16 text-center text-ink-mute">Cargando servicios…</p>}
         {error && <p className="py-16 text-center text-peligro">{error}</p>}
 
         {!cargando && !error && visibles.length === 0 && (
@@ -82,98 +82,102 @@ export const Servicios = () => {
           </p>
         )}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {visibles.map((servicio, indice) => {
-            const imagen = resolverImagen(servicio.imagen_url);
-            const duracion = formatearDuracion(servicio.duracion_min);
-            const yaAgregado = estaEnCarrito('servicio', servicio.id);
+        {cargando ? (
+          <RejillaEsqueleto cantidad={6} columnas={3} etiqueta="Cargando servicios…" />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visibles.map((servicio, indice) => {
+              const imagen = resolverImagen(servicio.imagen_url);
+              const duracion = formatearDuracion(servicio.duracion_min);
+              const yaAgregado = estaEnCarrito('servicio', servicio.id);
 
-            return (
-              <article
-                key={servicio.id}
-                style={{ animationDelay: `${Math.min(indice, 8) * 55}ms` }}
-                onClick={() => setDetalle(servicio)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(evento) => {
-                  if (evento.key === 'Enter' || evento.key === ' ') {
-                    evento.preventDefault();
-                    setDetalle(servicio);
-                  }
-                }}
-                className="tarjeta tarjeta-hover flex cursor-pointer flex-col overflow-hidden animate-subir"
-              >
-                <div className="relative h-44 overflow-hidden bg-canvas">
-                  {imagen ? (
-                    <img
-                      src={imagen}
-                      alt={servicio.nombre}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center bg-gradient-to-br from-canvas to-brand-wash">
-                      <span className="text-2xl font-bold uppercase tracking-[0.3em] text-ink-faint">
-                        BIXE
-                      </span>
-                    </div>
-                  )}
+              return (
+                <article
+                  key={servicio.id}
+                  style={{ animationDelay: `${Math.min(indice, 8) * 55}ms` }}
+                  onClick={() => setDetalle(servicio)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(evento) => {
+                    if (evento.key === 'Enter' || evento.key === ' ') {
+                      evento.preventDefault();
+                      setDetalle(servicio);
+                    }
+                  }}
+                  className="tarjeta tarjeta-hover flex cursor-pointer flex-col overflow-hidden animate-mosaico"
+                >
+                  <div className="relative h-44 overflow-hidden bg-canvas">
+                    {imagen ? (
+                      <img
+                        src={imagen}
+                        alt={servicio.nombre}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center bg-gradient-to-br from-canvas to-brand-wash">
+                        <span className="text-2xl font-bold uppercase tracking-[0.3em] text-ink-faint">
+                          BIXE
+                        </span>
+                      </div>
+                    )}
 
-                  <span className="insignia insignia-marca absolute left-3 top-3 capitalize backdrop-blur">
-                    {servicio.categoria}
-                  </span>
-
-                  {servicio.imagenes?.length > 0 && (
-                    <span className="absolute right-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 text-[0.7rem] font-semibold tabular-nums text-white backdrop-blur">
-                      {servicio.imagenes.length + (servicio.imagen_url ? 1 : 0)} fotos
+                    <span className="insignia insignia-marca absolute left-3 top-3 capitalize backdrop-blur">
+                      {servicio.categoria}
                     </span>
-                  )}
-                </div>
 
-                <div className="flex flex-1 flex-col p-5">
-                  <h2 className="titular text-xl">{servicio.nombre}</h2>
-
-                  {duracion && (
-                    <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-mute">
-                      <IconoReloj className="h-3.5 w-3.5" />
-                      {duracion} aprox.
-                    </p>
-                  )}
-
-                  <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">
-                    {servicio.descripcion}
-                  </p>
-
-                  <div className="mt-5 flex items-end justify-between gap-3 border-t border-line pt-4">
-                    <div>
-                      <p className="text-[0.65rem] uppercase tracking-wider text-ink-mute">Desde</p>
-                      <p className="titular text-2xl tabular-nums">
-                        {formatearPrecio(servicio.precio)}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={(evento) => {
-                        // El clic no debe abrir además el detalle de la tarjeta.
-                        evento.stopPropagation();
-                        agregar({
-                          tipo: 'servicio',
-                          id: servicio.id,
-                          nombre: servicio.nombre,
-                          precio: servicio.precio,
-                          imagenUrl: servicio.imagen_url,
-                        });
-                      }}
-                      className={`btn ${yaAgregado ? 'btn-contorno' : 'btn-primario'}`}
-                    >
-                      <IconoCarrito className="h-4 w-4" />
-                      {yaAgregado ? 'Agregar otro' : 'Agregar'}
-                    </button>
+                    {servicio.imagenes?.length > 0 && (
+                      <span className="absolute right-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 text-[0.7rem] font-semibold tabular-nums text-white backdrop-blur">
+                        {servicio.imagenes.length + (servicio.imagen_url ? 1 : 0)} fotos
+                      </span>
+                    )}
                   </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+
+                  <div className="flex flex-1 flex-col p-5">
+                    <h2 className="titular text-xl">{servicio.nombre}</h2>
+
+                    {duracion && (
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-mute">
+                        <IconoReloj className="h-3.5 w-3.5" />
+                        {duracion} aprox.
+                      </p>
+                    )}
+
+                    <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-soft">
+                      {servicio.descripcion}
+                    </p>
+
+                    <div className="mt-5 flex items-end justify-between gap-3 border-t border-line pt-4">
+                      <div>
+                        <p className="text-[0.65rem] uppercase tracking-wider text-ink-mute">Desde</p>
+                        <p className="titular text-2xl tabular-nums">
+                          {formatearPrecio(servicio.precio)}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={(evento) => {
+                          // El clic no debe abrir además el detalle de la tarjeta.
+                          evento.stopPropagation();
+                          agregar({
+                            tipo: 'servicio',
+                            id: servicio.id,
+                            nombre: servicio.nombre,
+                            precio: servicio.precio,
+                            imagenUrl: servicio.imagen_url,
+                          });
+                        }}
+                        className={`btn ${yaAgregado ? 'btn-contorno' : 'btn-primario'}`}
+                      >
+                        <IconoCarrito className="h-4 w-4" />
+                        {yaAgregado ? 'Agregar otro' : 'Agregar'}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <ModalServicio

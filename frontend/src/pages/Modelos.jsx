@@ -5,6 +5,7 @@ import { Footer } from '../components/Footer';
 import { obtenerProductos } from '../services/api';
 import { formatearPrecio, resolverImagen } from '../utils/formato';
 import { IconoBuscar } from '../components/ui/Iconos';
+import { RejillaEsqueleto } from '../components/ui/RejillaEsqueleto';
 
 const CATEGORIAS = [
   { valor: 'todas', etiqueta: 'Todos' },
@@ -83,7 +84,6 @@ export const Modelos = () => {
           </div>
         </div>
 
-        {cargando && <p className="py-20 text-center text-ink-mute">Cargando modelos…</p>}
         {error && <p className="py-20 text-center text-peligro">{error}</p>}
 
         {!cargando && !error && visibles.length === 0 && (
@@ -92,68 +92,72 @@ export const Modelos = () => {
           </p>
         )}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {visibles.map((producto, indice) => {
-            const imagen = resolverImagen(producto.imagen_url);
+        {cargando ? (
+          <RejillaEsqueleto cantidad={6} columnas={3} etiqueta="Cargando modelos…" />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visibles.map((producto, indice) => {
+              const imagen = resolverImagen(producto.imagen_url);
 
-            return (
-              <Link
-                key={producto.id}
-                to={`/modelos/${producto.id}`}
-                style={{ animationDelay: `${Math.min(indice, 8) * 55}ms` }}
-                className="tarjeta tarjeta-hover group overflow-hidden animate-subir"
-              >
-                <div className="relative h-60 overflow-hidden bg-canvas">
-                  {imagen ? (
-                    <img
-                      src={imagen}
-                      alt={producto.nombre}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center bg-gradient-to-br from-canvas to-brand-wash">
-                      <span className="text-xl font-bold uppercase tracking-[0.3em] text-ink-faint">
-                        BIXE
-                      </span>
-                    </div>
-                  )}
-
-                  <span className="insignia insignia-neutra absolute left-3 top-3 capitalize backdrop-blur">
-                    {producto.categoria}
-                  </span>
-                </div>
-
-                <div className="p-5">
-                  <h2 className="titular text-2xl">{producto.nombre}</h2>
-                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-soft">
-                    {producto.descripcion}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {producto.cilindraje && (
-                      <span className="insignia insignia-neutra">{producto.cilindraje} cc</span>
+              return (
+                <Link
+                  key={producto.id}
+                  to={`/modelos/${producto.id}`}
+                  style={{ animationDelay: `${Math.min(indice, 8) * 55}ms` }}
+                  className="tarjeta tarjeta-hover group overflow-hidden animate-mosaico"
+                >
+                  <div className="relative h-60 overflow-hidden bg-canvas">
+                    {imagen ? (
+                      <img
+                        src={imagen}
+                        alt={producto.nombre}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center bg-gradient-to-br from-canvas to-brand-wash">
+                        <span className="text-xl font-bold uppercase tracking-[0.3em] text-ink-faint">
+                          BIXE
+                        </span>
+                      </div>
                     )}
-                    {producto.potencia && (
-                      <span className="insignia insignia-neutra">{producto.potencia}</span>
-                    )}
-                  </div>
 
-                  <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
-                    <div>
-                      <p className="text-[0.65rem] uppercase tracking-wider text-ink-mute">Desde</p>
-                      <p className="titular text-xl tabular-nums">
-                        {formatearPrecio(producto.precio)}
-                      </p>
-                    </div>
-                    <span className="accion text-ink-mute transition group-hover:text-brand-deep">
-                      Ver ficha →
+                    <span className="insignia insignia-neutra absolute left-3 top-3 capitalize backdrop-blur">
+                      {producto.categoria}
                     </span>
                   </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+
+                  <div className="p-5">
+                    <h2 className="titular text-2xl">{producto.nombre}</h2>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-soft">
+                      {producto.descripcion}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {producto.cilindraje && (
+                        <span className="insignia insignia-neutra">{producto.cilindraje} cc</span>
+                      )}
+                      {producto.potencia && (
+                        <span className="insignia insignia-neutra">{producto.potencia}</span>
+                      )}
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
+                      <div>
+                        <p className="text-[0.65rem] uppercase tracking-wider text-ink-mute">Desde</p>
+                        <p className="titular text-xl tabular-nums">
+                          {formatearPrecio(producto.precio)}
+                        </p>
+                      </div>
+                      <span className="accion text-ink-mute transition group-hover:text-brand-deep">
+                        Ver ficha →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <Footer />

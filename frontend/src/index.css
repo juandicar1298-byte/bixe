@@ -51,6 +51,12 @@
   --animate-subir: subir 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-aparecer: aparecer 0.35s ease-out both;
   --animate-deslizar: deslizar 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-mosaico: mosaico 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-letra: letra 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-brillo: brillo 1.5s ease-in-out infinite;
+  /* "backwards" es imprescindible: sin él, durante el segundo de retraso el
+     degradado se queda pintado quieto en mitad del logotipo. */
+  --animate-barrido: barrido 3.4s ease-in-out 1s infinite backwards;
 }
 
 @keyframes subir {
@@ -66,6 +72,32 @@
 @keyframes deslizar {
   from { opacity: 0; transform: translateX(24px); }
   to   { opacity: 1; transform: none; }
+}
+
+/* Entrada de las piezas del mosaico: suben y terminan de escalar a la vez.
+   La usan tanto los esqueletos de carga como las tarjetas reales, para que
+   el relevo entre unos y otras no se note. */
+@keyframes mosaico {
+  from { opacity: 0; transform: translateY(28px) scale(0.965); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Cada letra del logotipo aparece desenfocada y se asienta. */
+@keyframes letra {
+  from { opacity: 0; transform: translateY(0.55em); filter: blur(10px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* Barrido de luz: de un extremo al otro del elemento que lo contiene. */
+@keyframes brillo {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* Igual que el anterior pero con pausa entre pasadas, para el logotipo. */
+@keyframes barrido {
+  0%        { transform: translateX(-110%); }
+  50%, 100% { transform: translateX(215%); }
 }
 
 @layer base {
@@ -106,6 +138,17 @@
     border-radius: 99px;
   }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
+
+  /* Quien pida menos movimiento en su sistema operativo ve la página quieta:
+     todo sigue funcionando igual, solo que sin animaciones. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* ============================================================
@@ -294,5 +337,62 @@
     font-size: 0.875rem;
     color: var(--color-ink-soft);
     vertical-align: middle;
+  }
+
+  /* --- Bloque gris de carga ---
+     Ocupa el sitio exacto del contenido que todavía no llegó y lo recorre un
+     brillo, para que se lea como «esto está en camino» y no como un hueco.
+     No trae radio propio: lo pone quien lo usa con las utilidades de Tailwind. */
+  .esqueleto {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-line);
+  }
+  .esqueleto::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.7) 45%,
+      rgb(255 255 255 / 0.7) 55%,
+      transparent
+    );
+    animation: var(--animate-brillo);
+  }
+
+  /* --- Brillo que recorre el logotipo de la cortina de entrada ---
+     El degradado se escribe aquí, con sus paradas, en lugar de armarlo con
+     utilidades: hacen falta colas largas y muy tenues para que se lea como un
+     reflejo y no como un rectángulo claro cruzando la pantalla. */
+  .destello-logo {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 70%;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgb(255 255 255 / 0.02) 35%,
+      rgb(255 255 255 / 0.14) 50%,
+      rgb(255 255 255 / 0.02) 65%,
+      transparent 100%
+    );
+    animation: var(--animate-barrido);
+  }
+
+  /* --- Mosaico de carga ---
+     Columnas CSS en vez de rejilla: las piezas se apilan una debajo de otra
+     dentro de cada columna, así que pueden tener alturas distintas y el
+     resultado queda escalonado. */
+  .mosaico {
+    column-gap: 1.5rem;
+  }
+  .mosaico > * {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
   }
 }

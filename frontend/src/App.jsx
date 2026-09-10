@@ -3,6 +3,7 @@ import { CarritoProvider } from './context/CarritoContext';
 import { CarritoDrawer } from './components/CarritoDrawer';
 import { RutaProtegida } from './components/RutaProtegida';
 import { WhatsAppButton } from './components/WhatsAppButton';
+import { CortinaCarga } from './components/ui/CortinaCarga';
 import { Index } from './pages/Index';
 import { QuienesSomos } from './pages/QuienesSomos';
 import { Contacto } from './pages/Contacto';
@@ -65,6 +66,7 @@ function App() {
       </Routes>
 
       {/* Viven fuera de <Routes> para que sigan disponibles en todas las páginas */}
+      <CortinaCarga />
       <CarritoDrawer />
       <WhatsAppButton
         numero="573024170803"

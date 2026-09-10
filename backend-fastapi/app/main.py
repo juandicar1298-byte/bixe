@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as HTTPExceptionStarlette
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.base_datos import Base, motor
 from app.core.configuracion import configuracion
@@ -45,10 +46,22 @@ TAGS = [
 async def ciclo_de_vida(app: FastAPI):
     """Se ejecuta una vez al arrancar y una vez al apagar la aplicación."""
     logger.info("Verificando las tablas de la base de datos…")
-    async with motor.begin() as conexion:
-        # create_all no toca las tablas que ya existen: solo crea las que falten
-        # (en este proyecto, la de recuperación de contraseña).
-        await conexion.run_sync(Base.metadata.create_all)
+    try:
+        async with motor.begin() as conexion:
+            # create_all no toca las tablas que ya existen: solo crea las que
+            # falten (en este proyecto, la de recuperación de contraseña).
+            await conexion.run_sync(Base.metadata.create_all)
+    except (SQLAlchemyError, OSError) as error:
+        # Sin base de datos la API no sirve de nada. Se corta aquí con un
+        # mensaje claro en lugar de dejar un traceback de treinta líneas.
+        logger.error(
+            "No se pudo conectar a la base de datos. "
+            "Enciende MySQL/MariaDB (en XAMPP, el botón Start de MySQL) y "
+            "vuelve a arrancar la API. La conexión se configura en "
+            "backend-fastapi/.env, en URL_BASE_DATOS. Detalle: %s",
+            error,
+        )
+        raise SystemExit(1) from None
 
     if not configuracion.correo_configurado:
         logger.warning(

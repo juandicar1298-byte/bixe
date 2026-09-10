@@ -30,38 +30,53 @@ Hacen falta **MySQL/MariaDB**, **Node.js 18+** y **Python 3.12+**.
 
 ### 1. Base de datos
 
-Crea la base `bixe_db` y carga el esquema. Después aplica la migración de
-servicios y pedidos:
+Enciende MySQL (en XAMPP, el botón **Start** de MySQL). Después crea la base
+`bixe_db`, carga el esquema y aplica la migración de servicios y pedidos:
 
-```bash
+```
 mysql -u root -p bixe_db < backend/sql/servicios_pedidos.sql
 ```
 
 El script es idempotente: se puede ejecutar varias veces sin duplicar nada.
 
-### 2. Backend (FastAPI)
+### 2. Arrancar el proyecto
 
-```bash
+Hay un script para cada parte. Desde PowerShell, en la carpeta del proyecto,
+**en dos ventanas distintas**:
+
+```
+.\iniciar-backend.ps1
+```
+
+```
+.\iniciar-frontend.ps1
+```
+
+El primero levanta la API en **http://127.0.0.1:8000** (documentación en
+**/docs**) y el segundo la web en **http://localhost:5173**. Los scripts crean
+el `.env` a partir del ejemplo e instalan las dependencias de npm si faltan.
+
+### 3. La primera vez: crear el entorno de Python
+
+Antes de usar `iniciar-backend.ps1` hay que crear el entorno virtual una sola
+vez. Un comando por línea: **PowerShell 5.1 no acepta `&&`** para encadenarlos.
+
+```
 cd backend-fastapi
 python -m venv .venv
-.venv\Scripts\activate          # en Windows
-pip install -r requirements.txt
-copy .env.example .env          # y edita los valores
-uvicorn app.main:app --reload --port 8000
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Documentación interactiva: **http://127.0.0.1:8000/docs**
+No hace falta «activar» el entorno: tanto el script como el comando de arriba
+llaman directamente al Python que vive dentro de `.venv`, así que tampoco
+estorba la política de ejecución de PowerShell.
 
-### 3. Frontend
+Si prefieres levantar la API a mano, sin el script:
 
-```bash
-cd frontend
-npm install
-copy .env.example .env
-npm run dev
 ```
-
-Queda en **http://localhost:5173**.
+cd backend-fastapi
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+```
 
 ---
 

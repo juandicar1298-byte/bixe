@@ -211,8 +211,31 @@ del catálogo; las demás viven en `producto_imagenes` y `servicio_imagenes`.
 Para cargarlas: panel → Productos o Servicios → Editar → *Galería*. Se pueden
 elegir varias a la vez o arrastrarlas.
 
-Los seis servicios de ejemplo se crean sin foto, así que al principio se ven
-con el marcador «BIXE». Súbeles las tuyas desde el panel.
+### Ilustraciones de los servicios
+
+Los seis servicios de ejemplo traen ilustraciones propias, dibujadas con la
+paleta de la marca — no son fotografías ni imágenes de terceros. Los originales
+están en `backend-fastapi/assets/servicios/` y sí se versionan; las copias que
+sirve la API viven en `uploads/`, que está en el `.gitignore`.
+
+Después de clonar el repositorio, hay que publicarlas una vez:
+
+```
+.venv/Scripts/python.exe scripts/publicar_imagenes_servicios.py
+```
+
+Ese script copia cada PNG a `uploads/` y lo asigna como portada del servicio
+que le corresponde, emparejando por palabras clave del nombre. Los servicios
+que ya tengan portada no se tocan, salvo que se pase `--forzar`.
+
+Para rehacer los dibujos (por ejemplo si cambias los colores de la marca):
+
+```
+.venv/Scripts/python.exe scripts/generar_imagenes_servicios.py
+```
+
+Puedes reemplazar cualquiera de esos PNG por una foto tuya con el mismo
+nombre, o simplemente subir la que quieras desde el panel.
 
 ## Pruebas de la API
 

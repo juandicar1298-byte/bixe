@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Toast } from './Toast';
 import { Modal } from './ui/Modal';
 import { SelectorImagen } from './ui/SelectorImagen';
+import { GaleriaProducto } from './ui/GaleriaProducto';
 import { PanelSeccion, EstadoVacio, ContenedorTabla } from './dashboard/PanelSeccion';
 import { IconoMas, IconoBuscar } from './ui/Iconos';
 import { formatearPrecio, resolverImagen } from '../utils/formato';
@@ -56,6 +57,7 @@ export function GestionProductos({ permitirEliminar = false }) {
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoIdEditando, setProductoIdEditando] = useState(null); // null = creando
+  const [galeria, setGaleria] = useState([]);
   const [formData, setFormData] = useState(productoVacio);
   const [guardando, setGuardando] = useState(false);
 
@@ -108,13 +110,22 @@ export function GestionProductos({ permitirEliminar = false }) {
   const abrirEditar = (producto) => {
     setProductoIdEditando(producto.id);
     setFormData(mapearProductoAForm(producto));
+    setGaleria(producto.imagenes ?? []);
     setModalAbierto(true);
+  };
+
+  // Tras subir o quitar una foto se relee el producto, que es quien manda.
+  const refrescarGaleria = async () => {
+    const data = await obtenerTodosLosProductosApi();
+    setProductos(data);
+    setGaleria(data.find((p) => p.id === productoIdEditando)?.imagenes ?? []);
   };
 
   const cerrarModal = () => {
     setModalAbierto(false);
     setProductoIdEditando(null);
     setFormData(productoVacio);
+    setGaleria([]);
   };
 
   const handleChange = (e) => {
@@ -302,6 +313,20 @@ export function GestionProductos({ permitirEliminar = false }) {
             onCambiar={(url) => setFormData((prev) => ({ ...prev, imagen_url: url }))}
             onError={(mensaje) => mostrarToast(mensaje, 'error')}
           />
+
+          {productoIdEditando ? (
+            <GaleriaProducto
+              productoId={productoIdEditando}
+              imagenes={galeria}
+              onCambio={refrescarGaleria}
+              onError={(mensaje) => mostrarToast(mensaje, 'error')}
+            />
+          ) : (
+            <p className="rounded-xl border border-dashed border-line bg-veil px-4 py-3 text-xs text-ink-mute">
+              Guarda el producto primero y vuelve a abrirlo para agregarle más
+              fotos a la galería.
+            </p>
+          )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="md:col-span-2">

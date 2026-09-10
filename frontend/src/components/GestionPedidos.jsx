@@ -4,12 +4,17 @@ import { Modal } from './ui/Modal';
 import { PanelSeccion, EstadoVacio, ContenedorTabla } from './dashboard/PanelSeccion';
 import { IconoBuscar } from './ui/Iconos';
 import { formatearPrecio, formatearFechaHora } from '../utils/formato';
-import { ESTADOS_PEDIDO as ESTADOS, CLASE_INSIGNIA_ESTADO } from '../utils/pedidos';
+import {
+  ESTADOS_PEDIDO as ESTADOS,
+  CLASE_INSIGNIA_ESTADO,
+  CLASE_INSIGNIA_PAGO,
+} from '../utils/pedidos';
 import {
   obtenerPedidosApi,
   obtenerPedidoPorIdApi,
   cambiarEstadoPedidoApi,
   eliminarPedidoApi,
+  descargarFacturaApi,
 } from '../services/api';
 
 export function GestionPedidos({ permitirEliminar = false, onCambio }) {
@@ -100,6 +105,20 @@ export function GestionPedidos({ permitirEliminar = false, onCambio }) {
     }
   };
 
+  const descargarFactura = async (pedido) => {
+    try {
+      const blob = await descargarFacturaApi(pedido.id);
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `factura-pedido-${pedido.id}.pdf`;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      mostrarToast(err.message, 'error');
+    }
+  };
+
   const pendientes = pedidos.filter((p) => p.estado === 'pendiente').length;
 
   return (
@@ -156,6 +175,7 @@ export function GestionPedidos({ permitirEliminar = false, onCambio }) {
                 <th className="th">Fecha</th>
                 <th className="th">Total</th>
                 <th className="th">Estado</th>
+                <th className="th">Pago</th>
                 <th className="th text-right">Acciones</th>
               </tr>
             </thead>
@@ -183,10 +203,23 @@ export function GestionPedidos({ permitirEliminar = false, onCambio }) {
                     </select>
                   </td>
                   <td className="td">
+                    <span className={`insignia ${CLASE_INSIGNIA_PAGO[p.estado_pago]}`}>
+                      {p.estado_pago}
+                    </span>
+                  </td>
+                  <td className="td">
                     <div className="flex justify-end gap-3">
                       <button onClick={() => abrirDetalle(p.id)} className="accion text-brand-deep hover:underline">
                         Ver detalle
                       </button>
+                      {p.estado_pago === 'pagado' && (
+                        <button
+                          onClick={() => descargarFactura(p)}
+                          className="accion text-exito hover:underline"
+                        >
+                          Factura
+                        </button>
+                      )}
                       {permitirEliminar && (
                         <button onClick={() => handleEliminar(p)} className="accion text-peligro hover:underline">
                           Eliminar

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
@@ -33,6 +33,22 @@ export const ModeloDetalle = () => {
   const [error, setError] = useState('');
 
   const { agregar } = useCarrito();
+  const [indiceFoto, setIndiceFoto] = useState(0);
+
+  // La portada va primero y luego la galería, sin repetir la misma URL.
+  const fotos = useMemo(() => {
+    if (!producto) return [];
+
+    const candidatas = [
+      { url: producto.imagen_url, descripcion: producto.nombre },
+      ...(producto.imagenes ?? []),
+    ];
+
+    const vistas = new Set();
+    return candidatas
+      .filter((foto) => foto.url && !vistas.has(foto.url) && vistas.add(foto.url))
+      .map((foto) => ({ ...foto, url: resolverImagen(foto.url) }));
+  }, [producto]);
 
   useEffect(() => {
     const cargar = async () => {
@@ -40,6 +56,7 @@ export const ModeloDetalle = () => {
       try {
         const data = await obtenerProductoPorId(id);
         setProducto(data);
+        setIndiceFoto(0);
         setError('');
       } catch (err) {
         setError(err.message);
@@ -72,7 +89,6 @@ export const ModeloDetalle = () => {
     );
   }
 
-  const imagen = resolverImagen(producto.imagen_url);
   const especificaciones = FICHA.filter((fila) => producto[fila.clave]);
 
   return (
@@ -87,19 +103,68 @@ export const ModeloDetalle = () => {
         </Link>
 
         <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
-          {/* --- Imagen --- */}
-          <div className="overflow-hidden rounded-3xl border border-line bg-surface">
-            {imagen ? (
-              <img
-                src={imagen}
-                alt={producto.nombre}
-                className="h-[340px] w-full object-cover md:h-[480px]"
-              />
-            ) : (
-              <div className="grid h-[340px] w-full place-items-center bg-gradient-to-br from-canvas to-brand-wash md:h-[480px]">
-                <span className="text-3xl font-bold uppercase tracking-[0.3em] text-ink-faint">
-                  BIXE
-                </span>
+          {/* --- Galería --- */}
+          <div>
+            <div className="relative overflow-hidden rounded-3xl border border-line bg-surface">
+              {fotos.length > 0 ? (
+                <>
+                  <img
+                    key={fotos[indiceFoto].url}
+                    src={fotos[indiceFoto].url}
+                    alt={fotos[indiceFoto].descripcion || producto.nombre}
+                    className="h-[340px] w-full object-cover animate-aparecer md:h-[480px]"
+                  />
+
+                  {fotos.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setIndiceFoto((i) => (i - 1 + fotos.length) % fotos.length)}
+                        aria-label="Foto anterior"
+                        className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-surface/85 text-ink shadow-suave backdrop-blur transition hover:bg-surface"
+                      >
+                        <IconoFlecha className="h-4 w-4 rotate-180" />
+                      </button>
+                      <button
+                        onClick={() => setIndiceFoto((i) => (i + 1) % fotos.length)}
+                        aria-label="Foto siguiente"
+                        className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-surface/85 text-ink shadow-suave backdrop-blur transition hover:bg-surface"
+                      >
+                        <IconoFlecha className="h-4 w-4" />
+                      </button>
+
+                      <span className="absolute bottom-3 right-3 rounded-full bg-ink/70 px-2.5 py-1 text-[0.7rem] font-semibold tabular-nums text-white backdrop-blur">
+                        {indiceFoto + 1} / {fotos.length}
+                      </span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="grid h-[340px] w-full place-items-center bg-gradient-to-br from-canvas to-brand-wash md:h-[480px]">
+                  <span className="text-3xl font-bold uppercase tracking-[0.3em] text-ink-faint">
+                    BIXE
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* --- Miniaturas --- */}
+            {fotos.length > 1 && (
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                {fotos.map((foto, i) => (
+                  <button
+                    key={foto.url}
+                    onClick={() => setIndiceFoto(i)}
+                    aria-label={`Ver foto ${i + 1}`}
+                    aria-current={i === indiceFoto}
+                    className={`h-16 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+                      i === indiceFoto
+                        ? 'border-brand'
+                        : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={foto.url} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
               </div>
             )}
           </div>

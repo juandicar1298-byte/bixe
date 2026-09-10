@@ -70,6 +70,19 @@ class PedidoNoCancelable(ConflictoDeNegocio):
         )
 
 
+class PedidoYaPagado(ConflictoDeNegocio):
+    codigo = "pedido_ya_pagado"
+
+    def __init__(self, pedido_id: int):
+        super().__init__(f"El pedido {pedido_id} ya fue pagado.")
+
+
+class PagoRechazado(ConflictoDeNegocio):
+    """La pasarela no aprobó el cobro. No es un fallo del sistema."""
+
+    codigo = "pago_rechazado"
+
+
 class OperacionSobreUnoMismo(ConflictoDeNegocio):
     """Impide que un administrador se bloquee a sí mismo el acceso."""
 

@@ -22,7 +22,16 @@ from app.errores import (
 )
 from app.middlewares import cabeceras_de_seguridad, registrar_peticion
 from app.models import bixe  # noqa: F401 — registra los modelos en Base
-from app.routers import auth, estadisticas, pedidos, productos, servicios, uploads, usuarios
+from app.routers import (
+    auth,
+    estadisticas,
+    pagos,
+    pedidos,
+    productos,
+    servicios,
+    uploads,
+    usuarios,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,6 +45,7 @@ TAGS = [
     {"name": "Productos", "description": "Catálogo de motos y autos."},
     {"name": "Servicios", "description": "Servicios del taller que el cliente puede pedir."},
     {"name": "Pedidos", "description": "Confirmación del carrito y seguimiento de los pedidos."},
+    {"name": "Pagos", "description": "Cobro del pedido y factura en PDF."},
     {"name": "Archivos", "description": "Subida de las imágenes del catálogo."},
     {"name": "Estadísticas", "description": "Cifras que alimentan los paneles."},
     {"name": "Sistema", "description": "Estado del servicio."},
@@ -118,6 +128,7 @@ app.include_router(usuarios.router)
 app.include_router(productos.router)
 app.include_router(servicios.router)
 app.include_router(pedidos.router)
+app.include_router(pagos.router)
 app.include_router(uploads.router)
 app.include_router(estadisticas.router)
 

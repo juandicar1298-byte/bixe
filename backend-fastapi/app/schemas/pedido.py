@@ -80,6 +80,7 @@ class PedidoResumen(BaseModel):
     id: int
     total: float
     estado: str
+    estado_pago: str
     notas: str | None
     fecha_creacion: datetime
     usuario: ClienteResumen

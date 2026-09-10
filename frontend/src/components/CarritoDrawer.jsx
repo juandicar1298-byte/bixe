@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ModalPago } from './ModalPago';
 import { useCarrito } from '../context/carritoContexto';
 import { useAuth } from '../hooks/useAuth';
 import { crearPedidoApi } from '../services/api';
@@ -15,6 +16,7 @@ export const CarritoDrawer = () => {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const [pedidoCreado, setPedidoCreado] = useState(null);
+  const [pagando, setPagando] = useState(false);
 
   // Todos los caminos para cerrar el panel pasan por aquí, así el mensaje de
   // éxito no reaparece la próxima vez que se abra el carrito.
@@ -89,19 +91,23 @@ export const CarritoDrawer = () => {
             <h3 className="titular text-2xl">Pedido confirmado</h3>
             <p className="text-sm text-ink-mute">
               Tu pedido <strong className="text-ink">#{pedidoCreado.id}</strong> quedó
-              registrado por {formatearPrecio(pedidoCreado.total)}. Puedes seguirlo desde tu panel.
+              registrado por {formatearPrecio(pedidoCreado.total)}. Puedes pagarlo
+              ahora o más tarde desde tu panel.
             </p>
             <div className="mt-3 flex w-full flex-col gap-2">
+              <button onClick={() => setPagando(true)} className="btn btn-primario w-full">
+                Pagar ahora
+              </button>
               <button
                 onClick={() => {
                   cerrar();
                   navigate('/cliente');
                 }}
-                className="btn btn-primario w-full"
+                className="btn btn-contorno w-full"
               >
                 Ver mis pedidos
               </button>
-              <button onClick={cerrar} className="btn btn-contorno w-full">
+              <button onClick={cerrar} className="btn btn-sutil w-full">
                 Seguir explorando
               </button>
             </div>
@@ -243,6 +249,18 @@ export const CarritoDrawer = () => {
           </>
         )}
       </aside>
+
+      <ModalPago
+        abierto={pagando}
+        pedido={pedidoCreado}
+        onCerrar={() => setPagando(false)}
+        onPagado={() => {
+          // El carrito ya se vació al confirmar; aquí solo se cierra todo.
+          setPagando(false);
+          cerrar();
+          navigate('/cliente');
+        }}
+      />
     </>
   );
 };

@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.comunes import Precio, limpiar_espacios
+from app.schemas.imagen import ImagenRespuesta
 
 # ----------------------------- Productos -----------------------------
 
@@ -80,6 +81,8 @@ class ProductoRespuesta(BaseModel):
     imagen_url: str | None
     estado: str
     fecha_creacion: datetime
+    # Fotos adicionales de la ficha. imagen_url sigue siendo la portada.
+    imagenes: list[ImagenRespuesta] = []
 
 
 # ----------------------------- Servicios -----------------------------

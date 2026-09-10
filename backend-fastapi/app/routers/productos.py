@@ -1,8 +1,9 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Path, Query, Response, status
 
 from app.crud import catalogo as crud_catalogo
+from app.crud import imagenes as crud_imagenes
 from app.dependencias import (
     Administrador,
     GestorDeProductos,
@@ -18,6 +19,7 @@ from app.schemas.catalogo import (
     ProductoRespuesta,
 )
 from app.schemas.error import RESPUESTAS_API
+from app.schemas.imagen import ImagenActualizar, ImagenCrear, ImagenRespuesta
 
 router = APIRouter(prefix="/api/productos", tags=["Productos"], responses=RESPUESTAS_API)
 
@@ -124,4 +126,67 @@ async def eliminar_producto(
     sesion: SesionDep, producto: ProductoExistente, administrador: Administrador
 ):
     await crud_catalogo.eliminar(sesion, producto)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --------------------------- Galería del producto ---------------------------
+# Las fotos se suben primero con POST /api/uploads y aquí se asocian al
+# producto. imagen_url sigue siendo la portada; esto son las adicionales.
+
+
+@router.get(
+    "/{producto_id}/imagenes",
+    response_model=list[ImagenRespuesta],
+    summary="Listar las fotos de un producto",
+)
+async def listar_imagenes(sesion: SesionDep, producto: ProductoExistente):
+    return await crud_imagenes.listar(sesion, producto.id)
+
+
+@router.post(
+    "/{producto_id}/imagenes",
+    response_model=ImagenRespuesta,
+    status_code=status.HTTP_201_CREATED,
+    summary="Agregar una foto a la galería",
+)
+async def agregar_imagen(
+    sesion: SesionDep,
+    producto: ProductoExistente,
+    gestor: GestorDeProductos,
+    datos: ImagenCrear,
+):
+    return await crud_imagenes.agregar(sesion, producto, datos.url, datos.descripcion)
+
+
+@router.patch(
+    "/{producto_id}/imagenes/{imagen_id}",
+    response_model=ImagenRespuesta,
+    summary="Editar el texto o el orden de una foto",
+)
+async def actualizar_imagen(
+    sesion: SesionDep,
+    producto: ProductoExistente,
+    gestor: GestorDeProductos,
+    imagen_id: Annotated[int, Path(ge=1)],
+    datos: ImagenActualizar,
+):
+    imagen = await crud_imagenes.obtener_o_fallar(sesion, producto.id, imagen_id)
+    return await crud_imagenes.actualizar(
+        sesion, imagen, datos.model_dump(exclude_unset=True)
+    )
+
+
+@router.delete(
+    "/{producto_id}/imagenes/{imagen_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Quitar una foto de la galería",
+)
+async def eliminar_imagen(
+    sesion: SesionDep,
+    producto: ProductoExistente,
+    gestor: GestorDeProductos,
+    imagen_id: Annotated[int, Path(ge=1)],
+):
+    imagen = await crud_imagenes.obtener_o_fallar(sesion, producto.id, imagen_id)
+    await crud_imagenes.eliminar(sesion, imagen)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,20 +1,48 @@
 {
   "info": {
     "name": "BIXE API - Cuarto Avance (FastAPI)",
-    "description": "Colección para evidenciar los endpoints del cuarto avance.\n\nCómo usarla:\n1. Levanta el backend: uvicorn app.main:app --reload --port 8000\n2. Importa esta colección en Postman.\n3. Ejecuta «Login (Administrador)» primero: guarda el token automáticamente en la variable {{token}} y el resto de peticiones ya salen autenticadas.\n\nLas carpetas están ordenadas para poder ejecutarlas de arriba abajo con el Runner.",
+    "description": "Colección para evidenciar los endpoints del cuarto avance.\n\nCómo usarla:\n1. Levanta el backend: uvicorn app.main:app --reload --port 8000\n2. Importa esta colección en Postman.\n3. Ejecuta «Login (Administrador)» primero: guarda el token automáticamente en la variable {{token}} y el resto de peticiones ya salen autenticadas.\n\nLas carpetas están ordenadas para poder ejecutarlas de arriba abajo con el Runner.\n\nLa pasarela es simulada: no se cobra dinero real. Tarjetas de prueba en el README.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8000/api" },
-    { "key": "token", "value": "" },
-    { "key": "usuario_id", "value": "" },
-    { "key": "producto_id", "value": "" },
-    { "key": "servicio_id", "value": "" },
-    { "key": "pedido_id", "value": "" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "usuario_id",
+      "value": ""
+    },
+    {
+      "key": "producto_id",
+      "value": ""
+    },
+    {
+      "key": "servicio_id",
+      "value": ""
+    },
+    {
+      "key": "pedido_id",
+      "value": ""
+    },
+    {
+      "key": "imagen_id",
+      "value": ""
+    }
   ],
   "auth": {
     "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
   },
   "item": [
     {
@@ -35,7 +63,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/usuarios/registro",
             "body": {
               "mode": "raw",
@@ -58,7 +91,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/usuarios/registro",
             "body": {
               "mode": "raw",
@@ -84,7 +122,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/auth/login",
             "body": {
               "mode": "raw",
@@ -107,7 +150,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/auth/login",
             "body": {
               "mode": "raw",
@@ -117,13 +165,21 @@
         },
         {
           "name": "Usuario autenticado (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/auth/yo" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/yo"
+          }
         },
         {
           "name": "Solicitar recuperacion de contrasena (202)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/auth/recuperar",
             "body": {
               "mode": "raw",
@@ -141,11 +197,17 @@
           "event": [
             {
               "listen": "test",
-              "script": { "exec": ["pm.test('Responde 401', () => pm.response.to.have.status(401));"] }
+              "script": {
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "url": "{{base_url}}/usuarios"
           }
@@ -153,9 +215,16 @@
         {
           "name": "Con token invalido (401)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer token.invalido.aqui" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer token.invalido.aqui"
+              }
+            ],
             "url": "{{base_url}}/usuarios"
           }
         }
@@ -166,15 +235,24 @@
       "item": [
         {
           "name": "Listar usuarios (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/usuarios?limite=20&desplazamiento=0" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios?limite=20&desplazamiento=0"
+          }
         },
         {
           "name": "Listar filtrando por rol (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/usuarios?rol_id=3&estado=activo" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios?rol_id=3&estado=activo"
+          }
         },
         {
           "name": "Listar roles (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/usuarios/roles" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios/roles"
+          }
         },
         {
           "name": "Crear usuario con rol (POST 201)",
@@ -191,7 +269,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/usuarios",
             "body": {
               "mode": "raw",
@@ -201,24 +284,43 @@
         },
         {
           "name": "Consultar un usuario (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/usuarios/{{usuario_id}}" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios/{{usuario_id}}"
+          }
         },
         {
           "name": "Actualizar usuario (PATCH)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/usuarios/{{usuario_id}}",
-            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Carlos Alberto\",\n  \"telefono\": \"3009998887\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Alberto\",\n  \"telefono\": \"3009998887\"\n}"
+            }
           }
         },
         {
           "name": "Cambiar estado a inactivo (PATCH)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/usuarios/{{usuario_id}}/estado",
-            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"inactivo\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"inactivo\"\n}"
+            }
           }
         },
         {
@@ -226,20 +328,34 @@
           "event": [
             {
               "listen": "test",
-              "script": { "exec": ["pm.test('Responde 404', () => pm.response.to.have.status(404));"] }
+              "script": {
+                "exec": [
+                  "pm.test('Responde 404', () => pm.response.to.have.status(404));"
+                ]
+              }
             }
           ],
-          "request": { "method": "GET", "url": "{{base_url}}/usuarios/999999" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios/999999"
+          }
         },
         {
           "name": "Eliminar usuario (DELETE 204)",
           "event": [
             {
               "listen": "test",
-              "script": { "exec": ["pm.test('Responde 204 sin cuerpo', () => pm.response.to.have.status(204));"] }
+              "script": {
+                "exec": [
+                  "pm.test('Responde 204 sin cuerpo', () => pm.response.to.have.status(204));"
+                ]
+              }
             }
           ],
-          "request": { "method": "DELETE", "url": "{{base_url}}/usuarios/{{usuario_id}}" }
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/usuarios/{{usuario_id}}"
+          }
         }
       ]
     },
@@ -248,13 +364,21 @@
       "item": [
         {
           "name": "Ver mi perfil (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/usuarios/perfil" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios/perfil"
+          }
         },
         {
           "name": "Editar mi perfil (PUT)",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/usuarios/perfil",
             "body": {
               "mode": "raw",
@@ -269,19 +393,30 @@
       "item": [
         {
           "name": "Catalogo publico (GET, sin token)",
-          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/productos" }
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{base_url}}/productos"
+          }
         },
         {
           "name": "Catalogo con filtros (GET)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "url": "{{base_url}}/productos?categoria=moto&precio_max=50000000&limite=10"
           }
         },
         {
           "name": "Todos incluidos ocultos (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/productos/gestion" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos/gestion"
+          }
         },
         {
           "name": "Crear producto (POST 201)",
@@ -298,7 +433,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/productos",
             "body": {
               "mode": "raw",
@@ -310,23 +450,42 @@
           "name": "Actualizar producto (PATCH)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/productos/{{producto_id}}",
-            "body": { "mode": "raw", "raw": "{\n  \"precio\": 42000000\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precio\": 42000000\n}"
+            }
           }
         },
         {
           "name": "Ocultar producto (PATCH estado)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/productos/{{producto_id}}/estado",
-            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"inactivo\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"inactivo\"\n}"
+            }
           }
         },
         {
           "name": "Eliminar producto (DELETE 204)",
-          "request": { "method": "DELETE", "url": "{{base_url}}/productos/{{producto_id}}" }
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/productos/{{producto_id}}"
+          }
         }
       ]
     },
@@ -335,7 +494,13 @@
       "item": [
         {
           "name": "Servicios publicos (GET, sin token)",
-          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/servicios" }
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{base_url}}/servicios"
+          }
         },
         {
           "name": "Crear servicio (POST 201)",
@@ -352,7 +517,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/servicios",
             "body": {
               "mode": "raw",
@@ -364,14 +534,25 @@
           "name": "Actualizar servicio (PATCH)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/servicios/{{servicio_id}}",
-            "body": { "mode": "raw", "raw": "{\n  \"precio\": 165000\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precio\": 165000\n}"
+            }
           }
         },
         {
           "name": "Eliminar servicio (DELETE 204)",
-          "request": { "method": "DELETE", "url": "{{base_url}}/servicios/{{servicio_id}}" }
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/servicios/{{servicio_id}}"
+          }
         }
       ]
     },
@@ -395,7 +576,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/pedidos",
             "body": {
               "mode": "raw",
@@ -405,23 +591,40 @@
         },
         {
           "name": "Mis pedidos (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/pedidos/mis" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos/mis"
+          }
         },
         {
           "name": "Todos los pedidos (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/pedidos?estado=pendiente" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos?estado=pendiente"
+          }
         },
         {
           "name": "Detalle del pedido (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/pedidos/{{pedido_id}}" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}"
+          }
         },
         {
           "name": "Cambiar estado (PATCH)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/pedidos/{{pedido_id}}/estado",
-            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"confirmado\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"confirmado\"\n}"
+            }
           }
         },
         {
@@ -429,19 +632,34 @@
           "event": [
             {
               "listen": "test",
-              "script": { "exec": ["pm.test('Responde 409', () => pm.response.to.have.status(409));"] }
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/pedidos",
-            "body": { "mode": "raw", "raw": "{\n  \"items\": [ { \"tipo\": \"servicio\", \"id\": 999999 } ]\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [ { \"tipo\": \"servicio\", \"id\": 999999 } ]\n}"
+            }
           }
         },
         {
           "name": "Eliminar pedido (DELETE 204)",
-          "request": { "method": "DELETE", "url": "{{base_url}}/pedidos/{{pedido_id}}" }
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}"
+          }
         }
       ]
     },
@@ -450,7 +668,10 @@
       "item": [
         {
           "name": "Cifras del panel (GET)",
-          "request": { "method": "GET", "url": "{{base_url}}/estadisticas" }
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/estadisticas"
+          }
         },
         {
           "name": "Subir imagen (POST 201)",
@@ -460,10 +681,220 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "imagen", "type": "file", "src": [], "description": "Elige un JPG o PNG de menos de 3 MB." }
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": [],
+                  "description": "Elige un JPG o PNG de menos de 3 MB."
+                }
               ]
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "09 Pagos y facturacion",
+      "item": [
+        {
+          "name": "Pago rechazado - sin fondos (201, aprobado=false)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/pago",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"4000 0000 0000 9995\",\n  \"titular\": \"CLIENTE DE PRUEBA\",\n  \"mes\": 12,\n  \"anio\": 2030,\n  \"cvv\": \"123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('La pasarela lo rechaza', () => pm.expect(pm.response.json().aprobado).to.be.false);",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().mensaje).to.include('Fondos'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pago aprobado (201) + emite factura",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/pago",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"4242 4242 4242 4242\",\n  \"titular\": \"CLIENTE DE PRUEBA\",\n  \"mes\": 12,\n  \"anio\": 2030,\n  \"cvv\": \"123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json();",
+                  "pm.test('Aprobado', () => pm.expect(d.aprobado).to.be.true);",
+                  "pm.test('Emite la factura', () => pm.expect(d.factura.numero).to.be.a('string'));",
+                  "pm.test('Base + IVA cuadra con el total', () => {",
+                  "  const f = d.factura;",
+                  "  pm.expect(Math.round((f.base_gravable + f.valor_iva) * 100) / 100).to.eql(f.total);",
+                  "});",
+                  "pm.test('No devuelve el numero completo', () => pm.expect(JSON.stringify(d)).to.not.include('4242424242424242'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagar dos veces (409)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/pago",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"4242 4242 4242 4242\",\n  \"titular\": \"CLIENTE DE PRUEBA\",\n  \"mes\": 12,\n  \"anio\": 2030,\n  \"cvv\": \"123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar el pago (GET)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/pago"
+          }
+        },
+        {
+          "name": "Consultar la factura (GET)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/factura"
+          }
+        },
+        {
+          "name": "Descargar la factura en PDF (GET)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/factura.pdf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es un PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 Galeria del producto",
+      "item": [
+        {
+          "name": "Listar fotos (GET, sin token)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos/{{producto_id}}/imagenes",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Agregar una foto (POST 201)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/productos/{{producto_id}}/imagenes",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"/uploads/ejemplo.jpg\",\n  \"descripcion\": \"Vista lateral derecha\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('imagen_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar el orden o el texto (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/productos/{{producto_id}}/imagenes/{{imagen_id}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Vista trasera\",\n  \"orden\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Quitar la foto (DELETE 204)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/productos/{{producto_id}}/imagenes/{{imagen_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

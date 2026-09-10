@@ -18,37 +18,61 @@ const DURACION = 6000;
 
 export const Carousel = () => {
   const [indice, setIndice] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [pausado, setPausado] = useState(false);
 
-  const cambiarSlide = useCallback((calcularNuevo) => {
-    setVisible(false);
-    setTimeout(() => {
-      setIndice(calcularNuevo);
-      setVisible(true);
-    }, 320);
+  // Todas las diapositivas están montadas a la vez y solo cambia la opacidad,
+  // así que el cambio es inmediato: no hay setTimeout que se pueda apilar ni
+  // que deje el desvanecido a medias si se pulsan las flechas rápido.
+  const ir = useCallback((calcular) => {
+    setIndice((previo) => (calcular(previo) + items.length) % items.length);
   }, []);
 
-  useEffect(() => {
-    const temporizador = setInterval(() => {
-      cambiarSlide((previo) => (previo === items.length - 1 ? 0 : previo + 1));
-    }, DURACION);
-    return () => clearInterval(temporizador);
-  }, [cambiarSlide]);
+  const anterior = useCallback(() => ir((i) => i - 1), [ir]);
+  const siguiente = useCallback(() => ir((i) => i + 1), [ir]);
 
-  const anterior = () => cambiarSlide((previo) => (previo === 0 ? items.length - 1 : previo - 1));
-  const siguiente = () => cambiarSlide((previo) => (previo === items.length - 1 ? 0 : previo + 1));
+  // El efecto depende de "indice", así que el reloj vuelve a empezar cada vez
+  // que se cambia de diapositiva. Sin esto, pulsar una flecha justo antes de
+  // que salte sola hacía avanzar dos de golpe.
+  useEffect(() => {
+    if (pausado) return undefined;
+
+    const temporizador = setTimeout(siguiente, DURACION);
+    return () => clearTimeout(temporizador);
+  }, [indice, pausado, siguiente]);
+
+  // Flechas del teclado, por accesibilidad.
+  useEffect(() => {
+    const alPulsar = (evento) => {
+      if (evento.key === 'ArrowLeft') anterior();
+      if (evento.key === 'ArrowRight') siguiente();
+    };
+    window.addEventListener('keydown', alPulsar);
+    return () => window.removeEventListener('keydown', alPulsar);
+  }, [anterior, siguiente]);
 
   const actual = items[indice];
 
   return (
-    <div className="relative h-[88vh] w-full overflow-hidden bg-ink">
-      <img
-        src={actual.img}
-        alt={actual.titulo}
-        className={`h-full w-full object-cover transition-all duration-500 ease-out ${
-          visible ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
-        }`}
-      />
+    <section
+      className="relative h-[88vh] w-full overflow-hidden bg-ink"
+      aria-roledescription="carrusel"
+      aria-label="Modelos destacados"
+      onMouseEnter={() => setPausado(true)}
+      onMouseLeave={() => setPausado(false)}
+    >
+      {/* Todas las imágenes apiladas; solo una es visible */}
+      {items.map((item, i) => (
+        <img
+          key={item.titulo}
+          src={item.img}
+          alt={i === indice ? item.titulo : ''}
+          aria-hidden={i !== indice}
+          loading={i === 0 ? 'eager' : 'lazy'}
+          className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out ${
+            i === indice ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
+          }`}
+        />
+      ))}
 
       {/* Degradados: uno para el texto abajo, otro para que el header respire */}
       <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/45 to-transparent" />
@@ -58,7 +82,7 @@ export const Carousel = () => {
       <button
         onClick={anterior}
         aria-label="Modelo anterior"
-        className="absolute left-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/25 text-white backdrop-blur-sm transition hover:border-white hover:bg-white hover:text-ink md:left-8"
+        className="absolute left-4 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/25 text-white backdrop-blur-sm transition hover:border-white hover:bg-white hover:text-ink md:left-8"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 18l-6-6 6-6" />
@@ -68,7 +92,7 @@ export const Carousel = () => {
       <button
         onClick={siguiente}
         aria-label="Modelo siguiente"
-        className="absolute right-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/25 text-white backdrop-blur-sm transition hover:border-white hover:bg-white hover:text-ink md:right-8"
+        className="absolute right-4 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/25 text-white backdrop-blur-sm transition hover:border-white hover:bg-white hover:text-ink md:right-8"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 6l6 6-6 6" />
@@ -76,13 +100,10 @@ export const Carousel = () => {
       </button>
 
       {/* --- Texto principal --- */}
-      <div className="absolute inset-x-0 bottom-0">
+      <div className="absolute inset-x-0 bottom-0 z-10">
         <div className="mx-auto max-w-7xl px-6 pb-12 md:px-8 md:pb-16">
-          <div
-            className={`max-w-2xl transition-all duration-500 ease-out ${
-              visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-            }`}
-          >
+          {/* La key hace que React reinicie la animación en cada cambio */}
+          <div key={actual.titulo} className="max-w-2xl animate-subir">
             <p className="rotulo !text-white/70">{actual.categoria}</p>
 
             <h2 className="titular mt-3 text-6xl !text-white md:text-8xl">
@@ -109,8 +130,9 @@ export const Carousel = () => {
             {items.map((item, i) => (
               <button
                 key={item.titulo}
-                onClick={() => cambiarSlide(() => i)}
+                onClick={() => setIndice(i)}
                 aria-label={`Ir a ${item.titulo}`}
+                aria-current={i === indice}
                 className={`h-[3px] rounded-full transition-all duration-300 ${
                   i === indice ? 'w-12 bg-brand' : 'w-5 bg-white/30 hover:bg-white/60'
                 }`}
@@ -119,6 +141,6 @@ export const Carousel = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

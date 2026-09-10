@@ -95,6 +95,14 @@ class Producto(Base):
         DateTime, server_default=func.now()
     )
 
+    # selectin es seguro en async: carga la galería en una segunda consulta,
+    # no de forma perezosa cuando alguien lee el atributo.
+    imagenes: Mapped[list["ProductoImagen"]] = relationship(
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        order_by="ProductoImagen.orden",
+    )
+
 
 class Servicio(Base):
     __tablename__ = "servicios"
@@ -138,6 +146,8 @@ class Pedido(Base):
     )
     total: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
     estado: Mapped[str] = mapped_column(String(12), default="pendiente", index=True)
+    # El estado del pedido (preparación) y el del pago son cosas distintas.
+    estado_pago: Mapped[str] = mapped_column(String(12), default="pendiente", index=True)
     notas: Mapped[str | None] = mapped_column(String(255))
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
@@ -162,5 +172,78 @@ class RecuperacionContrasena(Base):
     expira_en: Mapped[datetime] = mapped_column(DateTime)
     usado_en: Mapped[datetime | None] = mapped_column(DateTime)
     fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+
+class ProductoImagen(Base):
+    """Fotos adicionales de un producto.
+
+    productos.imagen_url sigue siendo la portada (la que sale en el catálogo);
+    estas son las que se ven en la galería de la ficha del modelo.
+    """
+
+    __tablename__ = "producto_imagenes"
+
+    id: Mapped[int] = mapped_column("id_imagen", primary_key=True)
+    producto_id: Mapped[int] = mapped_column(
+        "id_producto",
+        ForeignKey("productos.id_producto", ondelete="CASCADE"),
+        index=True,
+    )
+    url: Mapped[str] = mapped_column(String(255))
+    descripcion: Mapped[str | None] = mapped_column(String(120))
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+
+class Pago(Base):
+    """Intento de cobro contra la pasarela.
+
+    Del número de tarjeta solo se conservan los cuatro últimos dígitos y la
+    marca. El número completo y el CVV no se guardan en ningún momento.
+    """
+
+    __tablename__ = "pagos"
+
+    id: Mapped[int] = mapped_column("id_pago", primary_key=True)
+    pedido_id: Mapped[int] = mapped_column(
+        "id_pedido", ForeignKey("pedidos.id_pedido", ondelete="CASCADE"), index=True
+    )
+    referencia: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    metodo: Mapped[str] = mapped_column(String(20), default="tarjeta")
+    marca: Mapped[str | None] = mapped_column(String(20))
+    ultimos_cuatro: Mapped[str | None] = mapped_column(String(4))
+    titular: Mapped[str | None] = mapped_column(String(60))
+    monto: Mapped[float] = mapped_column(Numeric(12, 2))
+    estado: Mapped[str] = mapped_column(String(12))
+    motivo_rechazo: Mapped[str | None] = mapped_column(String(120))
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+
+class Factura(Base):
+    """Factura emitida cuando el pago queda aprobado.
+
+    Los precios del catálogo ya incluyen IVA, así que la factura no suma nada
+    al total: discrimina cuánto de ese total corresponde al impuesto.
+    """
+
+    __tablename__ = "facturas"
+
+    id: Mapped[int] = mapped_column("id_factura", primary_key=True)
+    numero: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    consecutivo: Mapped[int] = mapped_column(Integer, unique=True)
+    pedido_id: Mapped[int] = mapped_column(
+        "id_pedido", ForeignKey("pedidos.id_pedido", ondelete="CASCADE"), unique=True
+    )
+    base_gravable: Mapped[float] = mapped_column(Numeric(12, 2))
+    porcentaje_iva: Mapped[float] = mapped_column(Numeric(5, 2), default=19)
+    valor_iva: Mapped[float] = mapped_column(Numeric(12, 2))
+    total: Mapped[float] = mapped_column(Numeric(12, 2))
+    fecha_emision: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )

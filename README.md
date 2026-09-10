@@ -31,13 +31,19 @@ Hacen falta **MySQL/MariaDB**, **Node.js 18+** y **Python 3.12+**.
 ### 1. Base de datos
 
 Enciende MySQL (en XAMPP, el botón **Start** de MySQL). Después crea la base
-`bixe_db`, carga el esquema y aplica la migración de servicios y pedidos:
+`bixe_db`, carga el esquema y aplica las dos migraciones **en este orden**:
 
 ```
 mysql -u root -p bixe_db < backend/sql/servicios_pedidos.sql
 ```
 
-El script es idempotente: se puede ejecutar varias veces sin duplicar nada.
+```
+mysql -u root -p bixe_db < backend-fastapi/sql/pagos_facturas_imagenes.sql
+```
+
+La primera crea servicios y pedidos; la segunda, la galería de fotos, los
+pagos y las facturas. Las dos son idempotentes: se pueden ejecutar varias
+veces sin duplicar nada.
 
 ### 2. Arrancar el proyecto
 
@@ -152,6 +158,41 @@ desactivar a un usuario o cambiarle el rol tiene efecto inmediato y no cuando
 caduque su sesión.
 
 ---
+
+## Pagos y facturación
+
+La pasarela es **simulada**: no mueve dinero real ni habla con ningún
+proveedor. Las validaciones sí son las de verdad — algoritmo de Luhn,
+vigencia de la tarjeta y longitud del CVV según la marca.
+
+Tarjetas de prueba (todas pasan Luhn, así que sirven para demostrar cada
+camino):
+
+| Número | Qué hace |
+|---|---|
+| `4242 4242 4242 4242` | Aprueba el pago |
+| `5555 5555 5555 4444` | Aprueba (Mastercard) |
+| `4000 0000 0000 9995` | Fondos insuficientes |
+| `4000 0000 0000 0002` | La rechaza el banco emisor |
+| `4000 0000 0000 0069` | Tarjeta vencida |
+
+Del número de tarjeta solo se guardan **la marca y los cuatro últimos
+dígitos**. El número completo y el CVV no se almacenan en ningún momento.
+
+Cuando el pago se aprueba se emite la factura con consecutivo automático
+(`BIXE-000001`, `BIXE-000002`…) y queda descargable en PDF desde el panel del
+cliente y desde el del administrador. Como los precios del catálogo ya
+incluyen IVA, la factura **no suma nada al total**: descompone cuánto de lo
+que pagó el cliente corresponde al impuesto del 19%.
+
+## Galería de fotos
+
+Cada producto admite hasta **8 fotos** además de la portada. La portada
+(`productos.imagen_url`) es la que sale en el catálogo; las demás viven en
+`producto_imagenes` y se ven en la ficha del modelo, con miniaturas y flechas.
+
+Para cargarlas: panel → Productos → Editar un producto → *Galería del modelo*.
+Se pueden elegir varias a la vez o arrastrarlas.
 
 ## Pruebas de la API
 

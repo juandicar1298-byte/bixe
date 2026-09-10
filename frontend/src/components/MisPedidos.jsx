@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Toast } from './Toast';
 import { Modal } from './ui/Modal';
 import { PanelSeccion, EstadoVacio, ContenedorTabla } from './dashboard/PanelSeccion';
-import { CLASE_INSIGNIA_ESTADO } from '../utils/pedidos';
+import { ModalPago } from './ModalPago';
+import { CLASE_INSIGNIA_ESTADO, CLASE_INSIGNIA_PAGO } from '../utils/pedidos';
 import { formatearPrecio, formatearFechaHora } from '../utils/formato';
 import {
   obtenerMisPedidosApi,
   obtenerPedidoPorIdApi,
   cancelarMiPedidoApi,
+  descargarFacturaApi,
 } from '../services/api';
 
 export function MisPedidos() {
@@ -18,6 +20,7 @@ export function MisPedidos() {
 
   const [detalle, setDetalle] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [pedidoAPagar, setPedidoAPagar] = useState(null);
 
   const [toastMensaje, setToastMensaje] = useState('');
   const [toastTipo, setToastTipo] = useState('exito');
@@ -74,6 +77,20 @@ export function MisPedidos() {
     }
   };
 
+  const descargarFactura = async (pedido) => {
+    try {
+      const blob = await descargarFacturaApi(pedido.id);
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `factura-pedido-${pedido.id}.pdf`;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      mostrarToast(err.message, 'error');
+    }
+  };
+
   const gastado = pedidos
     .filter((p) => p.estado !== 'cancelado')
     .reduce((suma, p) => suma + Number(p.total), 0);
@@ -111,6 +128,7 @@ export function MisPedidos() {
                 <th className="th">Fecha</th>
                 <th className="th">Total</th>
                 <th className="th">Estado</th>
+                <th className="th">Pago</th>
                 <th className="th text-right">Acciones</th>
               </tr>
             </thead>
@@ -124,12 +142,35 @@ export function MisPedidos() {
                     <span className={`insignia ${CLASE_INSIGNIA_ESTADO[p.estado]}`}>{p.estado}</span>
                   </td>
                   <td className="td">
+                    <span className={`insignia ${CLASE_INSIGNIA_PAGO[p.estado_pago]}`}>
+                      {p.estado_pago}
+                    </span>
+                  </td>
+                  <td className="td">
                     <div className="flex justify-end gap-3">
                       <button onClick={() => abrirDetalle(p.id)} className="accion text-brand-deep hover:underline">
                         Ver detalle
                       </button>
-                      {/* Solo se puede cancelar mientras el taller no lo haya tomado */}
-                      {p.estado === 'pendiente' && (
+                      {p.estado_pago === 'pagado' ? (
+                        <button
+                          onClick={() => descargarFactura(p)}
+                          className="accion text-exito hover:underline"
+                        >
+                          Factura
+                        </button>
+                      ) : (
+                        p.estado !== 'cancelado' && (
+                          <button
+                            onClick={() => setPedidoAPagar(p)}
+                            className="accion text-brand-deep hover:underline"
+                          >
+                            Pagar
+                          </button>
+                        )
+                      )}
+
+                      {/* Solo se puede cancelar mientras no se haya pagado ni lo haya tomado el taller */}
+                      {p.estado === 'pendiente' && p.estado_pago !== 'pagado' && (
                         <button onClick={() => cancelar(p)} className="accion text-peligro hover:underline">
                           Cancelar
                         </button>
@@ -194,6 +235,16 @@ export function MisPedidos() {
           </div>
         )}
       </Modal>
+
+      <ModalPago
+        abierto={Boolean(pedidoAPagar)}
+        pedido={pedidoAPagar}
+        onCerrar={() => setPedidoAPagar(null)}
+        onPagado={() => {
+          cargarPedidos();
+          mostrarToast('Pago aprobado. Ya puedes descargar la factura.');
+        }}
+      />
 
       <Toast
         mensaje={toastMensaje}

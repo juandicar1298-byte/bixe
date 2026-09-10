@@ -7,3 +7,10 @@ export const CLASE_INSIGNIA_ESTADO = {
   completado: 'insignia-exito',
   cancelado: 'insignia-peligro',
 };
+
+// Color de la insignia según el estado del pago.
+export const CLASE_INSIGNIA_PAGO = {
+  pendiente: 'insignia-neutra',
+  pagado: 'insignia-exito',
+  rechazado: 'insignia-peligro',
+};

@@ -74,6 +74,25 @@ const peticion = async (ruta, { metodo = 'GET', cuerpo, formulario } = {}) => {
   return datos;
 };
 
+/**
+ * Descarga un archivo protegido. No se puede usar un <a href> normal porque
+ * el endpoint exige la cabecera Authorization, así que se pide con fetch y se
+ * entrega como Blob.
+ */
+const peticionArchivo = async (ruta) => {
+  const respuesta = await fetch(`${API_URL}${ruta}`, { headers: cabeceras() });
+
+  if (!respuesta.ok) {
+    const datos = await respuesta.json().catch(() => null);
+    throw new ErrorDeApi(mensajeDeError(datos, respuesta), {
+      estado: respuesta.status,
+      codigo: datos?.codigo,
+    });
+  }
+
+  return respuesta.blob();
+};
+
 // Convierte { rol_id: 3, limite: 20 } en "?rol_id=3&limite=20", saltando vacíos.
 const consulta = (parametros = {}) => {
   const partes = Object.entries(parametros).filter(
@@ -197,3 +216,26 @@ export const subirImagenApi = (archivo) => {
   formulario.append('imagen', archivo);
   return peticion('/uploads', { metodo: 'POST', formulario });
 };
+
+// -------------------------- Pagos y facturación --------------------------
+
+export const pagarPedidoApi = (pedidoId, tarjeta) =>
+  peticion(`/pedidos/${pedidoId}/pago`, { metodo: 'POST', cuerpo: tarjeta });
+
+export const obtenerPagoApi = (pedidoId) => peticion(`/pedidos/${pedidoId}/pago`);
+
+export const obtenerFacturaApi = (pedidoId) => peticion(`/pedidos/${pedidoId}/factura`);
+
+export const descargarFacturaApi = (pedidoId) =>
+  peticionArchivo(`/pedidos/${pedidoId}/factura.pdf`);
+
+// ------------------------ Galería de un producto ------------------------
+
+export const obtenerImagenesApi = (productoId) =>
+  peticion(`/productos/${productoId}/imagenes`);
+
+export const agregarImagenApi = (productoId, datos) =>
+  peticion(`/productos/${productoId}/imagenes`, { metodo: 'POST', cuerpo: datos });
+
+export const eliminarImagenApi = (productoId, imagenId) =>
+  peticion(`/productos/${productoId}/imagenes/${imagenId}`, { metodo: 'DELETE' });

@@ -1,0 +1,471 @@
+{
+  "info": {
+    "name": "BIXE API - Cuarto Avance (FastAPI)",
+    "description": "Colección para evidenciar los endpoints del cuarto avance.\n\nCómo usarla:\n1. Levanta el backend: uvicorn app.main:app --reload --port 8000\n2. Importa esta colección en Postman.\n3. Ejecuta «Login (Administrador)» primero: guarda el token automáticamente en la variable {{token}} y el resto de peticiones ya salen autenticadas.\n\nLas carpetas están ordenadas para poder ejecutarlas de arriba abajo con el Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api" },
+    { "key": "token", "value": "" },
+    { "key": "usuario_id", "value": "" },
+    { "key": "producto_id", "value": "" },
+    { "key": "servicio_id", "value": "" },
+    { "key": "pedido_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "01 Autenticacion",
+      "item": [
+        {
+          "name": "Registro de cliente (POST 201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('No devuelve la contrasena', () => pm.expect(pm.response.text()).to.not.include('contrasena'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/usuarios/registro",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Ruiz\",\n  \"tipo_documento\": \"CC\",\n  \"numero_documento\": \"1036425871\",\n  \"direccion\": \"Carrera 43A #1-50\",\n  \"telefono\": \"3001234567\",\n  \"email\": \"ana.ruiz@ejemplo.com\",\n  \"contrasena\": \"Bixe2026*\",\n  \"confirmar_contrasena\": \"Bixe2026*\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Registro con contrasenas distintas (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Explica el campo que falla', () => pm.expect(pm.response.json()).to.have.property('detalles'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/usuarios/registro",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Ruiz\",\n  \"tipo_documento\": \"CC\",\n  \"numero_documento\": \"1036425872\",\n  \"direccion\": \"Carrera 43A #1-50\",\n  \"telefono\": \"3001234567\",\n  \"email\": \"otra@ejemplo.com\",\n  \"contrasena\": \"Bixe2026*\",\n  \"confirmar_contrasena\": \"NoCoincide1*\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (Administrador)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const datos = pm.response.json();",
+                  "pm.test('Devuelve un JWT', () => pm.expect(datos.acceso).to.be.a('string'));",
+                  "pm.collectionVariables.set('token', datos.acceso);",
+                  "pm.collectionVariables.set('usuario_id', datos.usuario.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"CAMBIAR_POR_TU_ADMIN@ejemplo.com\",\n  \"contrasena\": \"CAMBIAR_POR_TU_CONTRASENA\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login con credenciales malas (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Incluye WWW-Authenticate', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noexiste@ejemplo.com\",\n  \"contrasena\": \"Incorrecta1*\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Usuario autenticado (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/auth/yo" }
+        },
+        {
+          "name": "Solicitar recuperacion de contrasena (202)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/recuperar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.ruiz@ejemplo.com\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Endpoint protegido",
+      "item": [
+        {
+          "name": "Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Responde 401', () => pm.response.to.have.status(401));"] }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/usuarios"
+          }
+        },
+        {
+          "name": "Con token invalido (401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer token.invalido.aqui" }],
+            "url": "{{base_url}}/usuarios"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Usuarios (CRUD)",
+      "item": [
+        {
+          "name": "Listar usuarios (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/usuarios?limite=20&desplazamiento=0" }
+        },
+        {
+          "name": "Listar filtrando por rol (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/usuarios?rol_id=3&estado=activo" }
+        },
+        {
+          "name": "Listar roles (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/usuarios/roles" }
+        },
+        {
+          "name": "Crear usuario con rol (POST 201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('usuario_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Mesa\",\n  \"tipo_documento\": \"CC\",\n  \"numero_documento\": \"7778889990\",\n  \"direccion\": \"Calle 33 #10-20\",\n  \"telefono\": \"3007778889\",\n  \"email\": \"carlos.mesa@bixe.com\",\n  \"contrasena\": \"Bixe2026*\",\n  \"rol_id\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Consultar un usuario (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/usuarios/{{usuario_id}}" }
+        },
+        {
+          "name": "Actualizar usuario (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/usuarios/{{usuario_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Carlos Alberto\",\n  \"telefono\": \"3009998887\"\n}" }
+          }
+        },
+        {
+          "name": "Cambiar estado a inactivo (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/usuarios/{{usuario_id}}/estado",
+            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"inactivo\"\n}" }
+          }
+        },
+        {
+          "name": "Usuario inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Responde 404', () => pm.response.to.have.status(404));"] }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{base_url}}/usuarios/999999" }
+        },
+        {
+          "name": "Eliminar usuario (DELETE 204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Responde 204 sin cuerpo', () => pm.response.to.have.status(204));"] }
+            }
+          ],
+          "request": { "method": "DELETE", "url": "{{base_url}}/usuarios/{{usuario_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "04 Perfil propio",
+      "item": [
+        {
+          "name": "Ver mi perfil (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/usuarios/perfil" }
+        },
+        {
+          "name": "Editar mi perfil (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/usuarios/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nombre\",\n  \"apellido\": \"Apellido\",\n  \"direccion\": \"Carrera 43A #1-50\",\n  \"telefono\": \"3001234567\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Productos (CRUD)",
+      "item": [
+        {
+          "name": "Catalogo publico (GET, sin token)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/productos" }
+        },
+        {
+          "name": "Catalogo con filtros (GET)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/productos?categoria=moto&precio_max=50000000&limite=10"
+          }
+        },
+        {
+          "name": "Todos incluidos ocultos (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/productos/gestion" }
+        },
+        {
+          "name": "Crear producto (POST 201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('producto_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Moto de prueba Postman\",\n  \"categoria\": \"moto\",\n  \"cilindraje\": \"650\",\n  \"potencia\": \"76 HP\",\n  \"precio\": 45000000,\n  \"descripcion\": \"Creada desde Postman como evidencia.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar producto (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/productos/{{producto_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"precio\": 42000000\n}" }
+          }
+        },
+        {
+          "name": "Ocultar producto (PATCH estado)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/productos/{{producto_id}}/estado",
+            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"inactivo\"\n}" }
+          }
+        },
+        {
+          "name": "Eliminar producto (DELETE 204)",
+          "request": { "method": "DELETE", "url": "{{base_url}}/productos/{{producto_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "06 Servicios (CRUD)",
+      "item": [
+        {
+          "name": "Servicios publicos (GET, sin token)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/servicios" }
+        },
+        {
+          "name": "Crear servicio (POST 201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('servicio_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/servicios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio de prueba Postman\",\n  \"categoria\": \"mantenimiento\",\n  \"descripcion\": \"Creado desde Postman como evidencia.\",\n  \"duracion_min\": 60,\n  \"precio\": 150000\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar servicio (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/servicios/{{servicio_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"precio\": 165000\n}" }
+          }
+        },
+        {
+          "name": "Eliminar servicio (DELETE 204)",
+          "request": { "method": "DELETE", "url": "{{base_url}}/servicios/{{servicio_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "07 Pedidos",
+      "item": [
+        {
+          "name": "Confirmar carrito (POST 201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json();",
+                  "pm.collectionVariables.set('pedido_id', d.id);",
+                  "pm.test('El servidor calcula el total', () => pm.expect(d.total).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"tipo\": \"servicio\", \"id\": 1, \"cantidad\": 2 }\n  ],\n  \"notas\": \"Pedido de evidencia\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mis pedidos (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/pedidos/mis" }
+        },
+        {
+          "name": "Todos los pedidos (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/pedidos?estado=pendiente" }
+        },
+        {
+          "name": "Detalle del pedido (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/pedidos/{{pedido_id}}" }
+        },
+        {
+          "name": "Cambiar estado (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/pedidos/{{pedido_id}}/estado",
+            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"confirmado\"\n}" }
+          }
+        },
+        {
+          "name": "Articulo inexistente (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Responde 409', () => pm.response.to.have.status(409));"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/pedidos",
+            "body": { "mode": "raw", "raw": "{\n  \"items\": [ { \"tipo\": \"servicio\", \"id\": 999999 } ]\n}" }
+          }
+        },
+        {
+          "name": "Eliminar pedido (DELETE 204)",
+          "request": { "method": "DELETE", "url": "{{base_url}}/pedidos/{{pedido_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "08 Estadisticas y archivos",
+      "item": [
+        {
+          "name": "Cifras del panel (GET)",
+          "request": { "method": "GET", "url": "{{base_url}}/estadisticas" }
+        },
+        {
+          "name": "Subir imagen (POST 201)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/uploads",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "imagen", "type": "file", "src": [], "description": "Elige un JPG o PNG de menos de 3 MB." }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

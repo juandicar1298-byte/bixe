@@ -1,0 +1,22 @@
+# Dependencias
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Entorno (nunca se sube: contiene credenciales)
+.env
+.env.local
+
+# Compilados y temporales
+dist/
+.pytest_cache/
+.coverage
+
+# Archivos subidos por los usuarios
+backend/uploads/
+backend-fastapi/uploads/
+
+# Sistema
+Thumbs.db
+.DS_Store

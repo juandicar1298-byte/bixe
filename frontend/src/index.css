@@ -1,0 +1,298 @@
+@import "tailwindcss";
+
+/* ============================================================
+   BIXE — Sistema de diseño
+   Paleta clara y elegante: papel neutro, tinta casi negra y un
+   único acento azul. Todo lo demás (sombras, radios, tipografía)
+   sale de estos tokens, así que cambiar la marca es cambiar aquí.
+   ============================================================ */
+@theme {
+  /* --- Superficies --- */
+  --color-canvas: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-veil: #fafbfc;
+  --color-line: #e7e9ee;
+  --color-line-fuerte: #d3d8e0;
+
+  /* --- Tinta --- */
+  --color-ink: #0d0f13;
+  --color-ink-soft: #4b525c;
+  --color-ink-mute: #858d99;
+  --color-ink-faint: #b3bac4;
+
+  /* --- Marca ---
+     "brand" es el azul de la identidad; sobre blanco no alcanza
+     contraste para texto pequeño, por eso "brand-deep" existe. */
+  --color-brand: #3fa9f5;
+  --color-brand-deep: #0b7cc4;
+  --color-brand-ink: #075a91;
+  --color-brand-wash: #edf7fe;
+  --color-brand-borde: #bfe2fb;
+
+  /* --- Estados --- */
+  --color-exito: #10795a;
+  --color-exito-wash: #e6f5f0;
+  --color-alerta: #9a5b06;
+  --color-alerta-wash: #fdf2e3;
+  --color-peligro: #bd3529;
+  --color-peligro-wash: #fdedeb;
+
+  /* --- Tipografía --- */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-titulo: "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Profundidad --- */
+  --shadow-suave: 0 1px 2px rgb(13 15 19 / 0.04), 0 8px 24px -14px rgb(13 15 19 / 0.12);
+  --shadow-media: 0 2px 6px rgb(13 15 19 / 0.05), 0 20px 44px -22px rgb(13 15 19 / 0.20);
+  --shadow-alta: 0 40px 80px -32px rgb(13 15 19 / 0.32);
+  --shadow-brand: 0 16px 36px -16px rgb(63 169 245 / 0.55);
+
+  /* --- Movimiento --- */
+  --animate-subir: subir 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-aparecer: aparecer 0.35s ease-out both;
+  --animate-deslizar: deslizar 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes deslizar {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-soft);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5 {
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: var(--color-brand);
+    color: #fff;
+  }
+
+  /* Anillo de foco visible y consistente para navegación con teclado */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-deep);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-fuerte);
+    border: 3px solid var(--color-canvas);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
+}
+
+/* ============================================================
+   Piezas que se repiten en toda la app. Se definen una sola vez
+   para que los formularios y tarjetas no lleven cadenas larguísimas
+   de utilidades duplicadas en cada archivo.
+   ============================================================ */
+@layer components {
+  /* --- Rótulo pequeño en versalitas, la firma visual del sitio --- */
+  .rotulo {
+    font-family: var(--font-titulo);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.72rem;
+    color: var(--color-ink-mute);
+  }
+
+  /* --- Titulares --- */
+  .titular {
+    font-family: var(--font-titulo);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.005em;
+    line-height: 0.95;
+    color: var(--color-ink);
+  }
+
+  /* --- Tarjeta base --- */
+  .tarjeta {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-suave);
+  }
+
+  .tarjeta-hover {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .tarjeta-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-media);
+    border-color: var(--color-brand-borde);
+  }
+
+  /* --- Campos de formulario --- */
+  .campo {
+    width: 100%;
+    background: var(--color-veil);
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.9rem;
+    color: var(--color-ink);
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .campo::placeholder { color: var(--color-ink-faint); }
+  .campo:focus {
+    outline: none;
+    background: var(--color-surface);
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgb(63 169 245 / 0.16);
+  }
+  .campo:disabled {
+    background: var(--color-canvas);
+    color: var(--color-ink-mute);
+    cursor: not-allowed;
+  }
+
+  .etiqueta {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-ink-mute);
+    margin-bottom: 0.4rem;
+  }
+
+  /* --- Botones --- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.7rem 1.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.25s ease,
+                color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-primario {
+    background: var(--color-ink);
+    color: #fff;
+    border: 1px solid var(--color-ink);
+  }
+  .btn-primario:hover:not(:disabled) {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    box-shadow: var(--shadow-brand);
+  }
+
+  .btn-marca {
+    background: var(--color-brand);
+    color: #fff;
+    border: 1px solid var(--color-brand);
+  }
+  .btn-marca:hover:not(:disabled) {
+    background: var(--color-brand-deep);
+    border-color: var(--color-brand-deep);
+    box-shadow: var(--shadow-brand);
+  }
+
+  .btn-contorno {
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-line-fuerte);
+  }
+  .btn-contorno:hover:not(:disabled) {
+    border-color: var(--color-ink);
+    background: var(--color-veil);
+  }
+
+  .btn-sutil {
+    background: transparent;
+    color: var(--color-ink-soft);
+    border: 1px solid transparent;
+  }
+  .btn-sutil:hover:not(:disabled) {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+  }
+
+  /* --- Insignias de estado --- */
+  .insignia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+  }
+  .insignia-exito  { background: var(--color-exito-wash);  color: var(--color-exito); }
+  .insignia-alerta { background: var(--color-alerta-wash); color: var(--color-alerta); }
+  .insignia-peligro{ background: var(--color-peligro-wash);color: var(--color-peligro); }
+  .insignia-marca  { background: var(--color-brand-wash);  color: var(--color-brand-deep); }
+  .insignia-neutra { background: var(--color-canvas);      color: var(--color-ink-mute); }
+
+  /* --- Enlace de acción dentro de tablas --- */
+  .accion {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: color 0.2s ease;
+    cursor: pointer;
+  }
+
+  /* --- Encabezado de tabla --- */
+  .th {
+    padding: 0.75rem 1rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-ink-mute);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .td {
+    padding: 0.85rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-soft);
+    vertical-align: middle;
+  }
+}

@@ -231,13 +231,15 @@ export const obtenerFacturaApi = (pedidoId) => peticion(`/pedidos/${pedidoId}/fa
 export const descargarFacturaApi = (pedidoId) =>
   peticionArchivo(`/pedidos/${pedidoId}/factura.pdf`);
 
-// ------------------------ Galería de un producto ------------------------
+// ----------------- Galería de un producto o un servicio -----------------
+// "recurso" es "productos" o "servicios": las dos entidades exponen la misma
+// galería en la API, así que estas funciones sirven para ambas.
 
-export const obtenerImagenesApi = (productoId) =>
-  peticion(`/productos/${productoId}/imagenes`);
+export const obtenerImagenesApi = (recurso, id) =>
+  peticion(`/${recurso}/${id}/imagenes`);
 
-export const agregarImagenApi = (productoId, datos) =>
-  peticion(`/productos/${productoId}/imagenes`, { metodo: 'POST', cuerpo: datos });
+export const agregarImagenApi = (recurso, id, datos) =>
+  peticion(`/${recurso}/${id}/imagenes`, { metodo: 'POST', cuerpo: datos });
 
-export const eliminarImagenApi = (productoId, imagenId) =>
-  peticion(`/productos/${productoId}/imagenes/${imagenId}`, { metodo: 'DELETE' });
+export const eliminarImagenApi = (recurso, id, imagenId) =>
+  peticion(`/${recurso}/${id}/imagenes/${imagenId}`, { metodo: 'DELETE' });

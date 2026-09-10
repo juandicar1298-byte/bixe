@@ -140,7 +140,7 @@ async def eliminar_producto(
     summary="Listar las fotos de un producto",
 )
 async def listar_imagenes(sesion: SesionDep, producto: ProductoExistente):
-    return await crud_imagenes.listar(sesion, producto.id)
+    return await crud_imagenes.listar(sesion, producto)
 
 
 @router.post(
@@ -170,7 +170,7 @@ async def actualizar_imagen(
     imagen_id: Annotated[int, Path(ge=1)],
     datos: ImagenActualizar,
 ):
-    imagen = await crud_imagenes.obtener_o_fallar(sesion, producto.id, imagen_id)
+    imagen = await crud_imagenes.obtener_o_fallar(sesion, producto, imagen_id)
     return await crud_imagenes.actualizar(
         sesion, imagen, datos.model_dump(exclude_unset=True)
     )
@@ -187,6 +187,6 @@ async def eliminar_imagen(
     gestor: GestorDeProductos,
     imagen_id: Annotated[int, Path(ge=1)],
 ):
-    imagen = await crud_imagenes.obtener_o_fallar(sesion, producto.id, imagen_id)
+    imagen = await crud_imagenes.obtener_o_fallar(sesion, producto, imagen_id)
     await crud_imagenes.eliminar(sesion, imagen)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

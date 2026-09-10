@@ -32,6 +32,10 @@
     {
       "key": "imagen_id",
       "value": ""
+    },
+    {
+      "key": "imagen_servicio_id",
+      "value": ""
     }
   ],
   "auth": {
@@ -949,7 +953,7 @@
       ]
     },
     {
-      "name": "10 Galeria del producto",
+      "name": "10 Galerias de fotos",
       "item": [
         {
           "name": "Listar fotos (GET, sin token)",
@@ -1011,6 +1015,61 @@
           "request": {
             "method": "DELETE",
             "url": "{{base_url}}/productos/{{producto_id}}/imagenes/{{imagen_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Servicio - listar fotos (GET, sin token)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/servicios/{{servicio_id}}/imagenes",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Servicio - agregar foto (POST 201)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/servicios/{{servicio_id}}/imagenes",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"/uploads/ejemplo.jpg\",\n  \"descripcion\": \"El taller trabajando\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('imagen_servicio_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Servicio - quitar foto (DELETE 204)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/servicios/{{servicio_id}}/imagenes/{{imagen_servicio_id}}"
           },
           "event": [
             {

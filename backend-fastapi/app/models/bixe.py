@@ -120,6 +120,12 @@ class Servicio(Base):
         DateTime, server_default=func.now()
     )
 
+    imagenes: Mapped[list["ServicioImagen"]] = relationship(
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        order_by="ServicioImagen.orden",
+    )
+
 
 class PedidoItem(Base):
     __tablename__ = "pedido_items"
@@ -246,5 +252,28 @@ class Factura(Base):
     valor_iva: Mapped[float] = mapped_column(Numeric(12, 2))
     total: Mapped[float] = mapped_column(Numeric(12, 2))
     fecha_emision: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+
+class ServicioImagen(Base):
+    """Fotos adicionales de un servicio.
+
+    servicios.imagen_url sigue siendo la portada (la de la tarjeta del
+    catálogo); estas son las que se ven al abrir el detalle del servicio.
+    """
+
+    __tablename__ = "servicio_imagenes"
+
+    id: Mapped[int] = mapped_column("id_imagen", primary_key=True)
+    servicio_id: Mapped[int] = mapped_column(
+        "id_servicio",
+        ForeignKey("servicios.id_servicio", ondelete="CASCADE"),
+        index=True,
+    )
+    url: Mapped[str] = mapped_column(String(255))
+    descripcion: Mapped[str | None] = mapped_column(String(120))
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )

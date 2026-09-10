@@ -28,7 +28,6 @@ class ImagenRespuesta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    producto_id: int
     url: str
     descripcion: str | None
     orden: int

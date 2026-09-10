@@ -6,13 +6,14 @@ import { IconoBasura, IconoMas } from './Iconos';
 const MAXIMO = 8;
 
 /**
- * Fotos adicionales de un producto. La portada se elige aparte con
- * SelectorImagen; esto es la galería que se ve en la ficha del modelo.
+ * Fotos adicionales de un producto o de un servicio. La portada se elige
+ * aparte con SelectorImagen; esto es la galería que se ve en el detalle.
  *
- * Solo aparece al editar, porque hace falta el id del producto para asociar
- * cada foto.
+ * Solo aparece al editar, porque hace falta el id para asociar cada foto.
+ *
+ * recurso: "productos" o "servicios" — la parte de la ruta de la API.
  */
-export const GaleriaProducto = ({ productoId, imagenes, onCambio, onError }) => {
+export const GaleriaImagenes = ({ recurso, registroId, imagenes, onCambio, onError }) => {
   const inputRef = useRef(null);
   const [subiendo, setSubiendo] = useState(false);
   const [arrastrando, setArrastrando] = useState(false);
@@ -33,7 +34,7 @@ export const GaleriaProducto = ({ productoId, imagenes, onCambio, onError }) => 
       // el resto a medias.
       for (const archivo of lista.slice(0, espacio)) {
         const { url } = await subirImagenApi(archivo);
-        await agregarImagenApi(productoId, { url });
+        await agregarImagenApi(recurso, registroId, { url });
       }
 
       if (lista.length > espacio) {
@@ -50,7 +51,7 @@ export const GaleriaProducto = ({ productoId, imagenes, onCambio, onError }) => 
 
   const quitar = async (imagen) => {
     try {
-      await eliminarImagenApi(productoId, imagen.id);
+      await eliminarImagenApi(recurso, registroId, imagen.id);
       await onCambio();
     } catch (error) {
       onError?.(error.message);
@@ -60,7 +61,7 @@ export const GaleriaProducto = ({ productoId, imagenes, onCambio, onError }) => 
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between">
-        <span className="etiqueta !mb-0">Galería del modelo</span>
+        <span className="etiqueta !mb-0">Galería</span>
         <span className="text-[0.7rem] text-ink-mute">
           {imagenes.length} de {MAXIMO}
         </span>
@@ -132,7 +133,7 @@ export const GaleriaProducto = ({ productoId, imagenes, onCambio, onError }) => 
 
       <p className="mt-2 text-[0.7rem] text-ink-mute">
         Puedes elegir varias a la vez o arrastrarlas. La portada se define
-        arriba y también aparece en la galería.
+        arriba y encabeza la galería.
       </p>
     </div>
   );

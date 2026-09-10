@@ -97,3 +97,22 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_estado_pago ON pedidos (estado_pago);
 -- ------------------------------------------------------------
 ALTER TABLE pedido_items
   ADD COLUMN IF NOT EXISTS imagen_url VARCHAR(255) NULL AFTER nombre;
+
+-- ------------------------------------------------------------
+-- 6. Galería del servicio
+--
+--    Igual que producto_imagenes: servicios.imagen_url es la portada que sale
+--    en la tarjeta del catálogo, y aquí van las fotos adicionales que se ven
+--    al abrir el detalle del servicio.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS servicio_imagenes (
+  id_imagen      INT AUTO_INCREMENT PRIMARY KEY,
+  id_servicio    INT           NOT NULL,
+  url            VARCHAR(255)  NOT NULL,
+  descripcion    VARCHAR(120)  NULL COMMENT 'Texto alternativo de la imagen',
+  orden          INT           NOT NULL DEFAULT 0,
+  fecha_creacion TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_imagenes_servicio (id_servicio, orden),
+  CONSTRAINT fk_imagenes_servicio
+    FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -41,7 +41,7 @@ mysql -u root -p bixe_db < backend/sql/servicios_pedidos.sql
 mysql -u root -p bixe_db < backend-fastapi/sql/pagos_facturas_imagenes.sql
 ```
 
-La primera crea servicios y pedidos; la segunda, la galería de fotos, los
+La primera crea servicios y pedidos; la segunda, las galerías de fotos, los
 pagos y las facturas. Las dos son idempotentes: se pueden ejecutar varias
 veces sin duplicar nada.
 
@@ -200,12 +200,19 @@ Pago, factura y actualización del pedido ocurren en la misma transacción.
 
 ## Galería de fotos
 
-Cada producto admite hasta **8 fotos** además de la portada. La portada
-(`productos.imagen_url`) es la que sale en el catálogo; las demás viven en
-`producto_imagenes` y se ven en la ficha del modelo, con miniaturas y flechas.
+Tanto los **productos** como los **servicios** admiten hasta **8 fotos**
+además de la portada. La portada (`imagen_url`) es la que sale en la tarjeta
+del catálogo; las demás viven en `producto_imagenes` y `servicio_imagenes`.
 
-Para cargarlas: panel → Productos → Editar un producto → *Galería del modelo*.
-Se pueden elegir varias a la vez o arrastrarlas.
+- En un **modelo** se ven en la ficha (`/modelos/:id`), con miniaturas y flechas.
+- En un **servicio** se ven al pulsar su tarjeta en `/servicios`, en un detalle
+  que muestra además la descripción larga.
+
+Para cargarlas: panel → Productos o Servicios → Editar → *Galería*. Se pueden
+elegir varias a la vez o arrastrarlas.
+
+Los seis servicios de ejemplo se crean sin foto, así que al principio se ven
+con el marcador «BIXE». Súbeles las tuyas desde el panel.
 
 ## Pruebas de la API
 

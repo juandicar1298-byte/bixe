@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.schemas.comunes import Precio, limpiar_espacios
+from app.schemas.comunes import Precio, TextoTecnico, limpiar_espacios
 from app.schemas.imagen import ImagenRespuesta
 
 # ----------------------------- Productos -----------------------------
@@ -25,13 +25,13 @@ class ProductoCrear(BaseModel):
 
     nombre: str = Field(min_length=2, max_length=60)
     categoria: Literal["moto", "auto"] = "moto"
-    cilindraje: str | None = Field(default=None, max_length=20)
-    potencia: str | None = Field(default=None, max_length=30)
-    torque: str | None = Field(default=None, max_length=30)
-    velocidad_maxima: str | None = Field(default=None, max_length=20)
-    peso: str | None = Field(default=None, max_length=20)
-    transmision: str | None = Field(default=None, max_length=30)
-    combustible: str | None = Field(default=None, max_length=30)
+    cilindraje: TextoTecnico | None = Field(default=None, max_length=20)
+    potencia: TextoTecnico | None = Field(default=None, max_length=30)
+    torque: TextoTecnico | None = Field(default=None, max_length=30)
+    velocidad_maxima: TextoTecnico | None = Field(default=None, max_length=20)
+    peso: TextoTecnico | None = Field(default=None, max_length=20)
+    transmision: TextoTecnico | None = Field(default=None, max_length=30)
+    combustible: TextoTecnico | None = Field(default=None, max_length=30)
     descripcion: str | None = Field(default=None, max_length=255)
     descripcion_larga: str | None = None
     precio: Precio
@@ -48,13 +48,13 @@ class ProductoActualizar(BaseModel):
 
     nombre: str | None = Field(default=None, min_length=2, max_length=60)
     categoria: Literal["moto", "auto"] | None = None
-    cilindraje: str | None = Field(default=None, max_length=20)
-    potencia: str | None = Field(default=None, max_length=30)
-    torque: str | None = Field(default=None, max_length=30)
-    velocidad_maxima: str | None = Field(default=None, max_length=20)
-    peso: str | None = Field(default=None, max_length=20)
-    transmision: str | None = Field(default=None, max_length=30)
-    combustible: str | None = Field(default=None, max_length=30)
+    cilindraje: TextoTecnico | None = Field(default=None, max_length=20)
+    potencia: TextoTecnico | None = Field(default=None, max_length=30)
+    torque: TextoTecnico | None = Field(default=None, max_length=30)
+    velocidad_maxima: TextoTecnico | None = Field(default=None, max_length=20)
+    peso: TextoTecnico | None = Field(default=None, max_length=20)
+    transmision: TextoTecnico | None = Field(default=None, max_length=30)
+    combustible: TextoTecnico | None = Field(default=None, max_length=30)
     descripcion: str | None = Field(default=None, max_length=255)
     descripcion_larga: str | None = None
     precio: Precio | None = None
@@ -144,6 +144,8 @@ class ServicioRespuesta(BaseModel):
     imagen_url: str | None
     estado: str
     fecha_creacion: datetime
+    # Fotos adicionales. imagen_url sigue siendo la portada de la tarjeta.
+    imagenes: list[ImagenRespuesta] = []
 
 
 class CambiarEstadoCatalogo(BaseModel):

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Toast } from './Toast';
 import { Modal } from './ui/Modal';
 import { SelectorImagen } from './ui/SelectorImagen';
-import { GaleriaProducto } from './ui/GaleriaProducto';
+import { GaleriaImagenes } from './ui/GaleriaImagenes';
 import { PanelSeccion, EstadoVacio, ContenedorTabla } from './dashboard/PanelSeccion';
 import { IconoMas, IconoBuscar } from './ui/Iconos';
 import { formatearPrecio, resolverImagen } from '../utils/formato';
@@ -137,9 +137,11 @@ export function GestionProductos({ permitirEliminar = false }) {
     e.preventDefault();
     setGuardando(true);
     try {
+      // El cilindraje se guarda como texto (la columna es VARCHAR y admite
+      // cosas como «650 cc»), así que va tal cual; solo el precio es número.
       const datos = {
         ...formData,
-        cilindraje: formData.cilindraje === '' ? null : Number(formData.cilindraje),
+        cilindraje: formData.cilindraje.trim() || null,
         precio: Number(formData.precio),
       };
 
@@ -315,8 +317,9 @@ export function GestionProductos({ permitirEliminar = false }) {
           />
 
           {productoIdEditando ? (
-            <GaleriaProducto
-              productoId={productoIdEditando}
+            <GaleriaImagenes
+              recurso="productos"
+              registroId={productoIdEditando}
               imagenes={galeria}
               onCambio={refrescarGaleria}
               onError={(mensaje) => mostrarToast(mensaje, 'error')}
@@ -345,7 +348,7 @@ export function GestionProductos({ permitirEliminar = false }) {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
               <label className="etiqueta">Cilindraje</label>
-              <input className="campo" name="cilindraje" type="number" value={formData.cilindraje} onChange={handleChange} placeholder="650" />
+              <input className="campo" name="cilindraje" value={formData.cilindraje} onChange={handleChange} maxLength={20} placeholder="650 cc" />
             </div>
             <div>
               <label className="etiqueta">Potencia</label>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { ModalServicio } from '../components/ModalServicio';
 import { useCarrito } from '../context/carritoContexto';
 import { obtenerServiciosApi } from '../services/api';
 import { formatearPrecio, formatearDuracion, resolverImagen } from '../utils/formato';
@@ -13,6 +14,7 @@ export const Servicios = () => {
   const [categoria, setCategoria] = useState('todas');
 
   const { agregar, estaEnCarrito } = useCarrito();
+  const [detalle, setDetalle] = useState(null);
 
   useEffect(() => {
     obtenerServiciosApi()
@@ -90,7 +92,16 @@ export const Servicios = () => {
               <article
                 key={servicio.id}
                 style={{ animationDelay: `${Math.min(indice, 8) * 55}ms` }}
-                className="tarjeta tarjeta-hover flex flex-col overflow-hidden animate-subir"
+                onClick={() => setDetalle(servicio)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(evento) => {
+                  if (evento.key === 'Enter' || evento.key === ' ') {
+                    evento.preventDefault();
+                    setDetalle(servicio);
+                  }
+                }}
+                className="tarjeta tarjeta-hover flex cursor-pointer flex-col overflow-hidden animate-subir"
               >
                 <div className="relative h-44 overflow-hidden bg-canvas">
                   {imagen ? (
@@ -110,6 +121,12 @@ export const Servicios = () => {
                   <span className="insignia insignia-marca absolute left-3 top-3 capitalize backdrop-blur">
                     {servicio.categoria}
                   </span>
+
+                  {servicio.imagenes?.length > 0 && (
+                    <span className="absolute right-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 text-[0.7rem] font-semibold tabular-nums text-white backdrop-blur">
+                      {servicio.imagenes.length + (servicio.imagen_url ? 1 : 0)} fotos
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
@@ -135,15 +152,17 @@ export const Servicios = () => {
                     </div>
 
                     <button
-                      onClick={() =>
+                      onClick={(evento) => {
+                        // El clic no debe abrir además el detalle de la tarjeta.
+                        evento.stopPropagation();
                         agregar({
                           tipo: 'servicio',
                           id: servicio.id,
                           nombre: servicio.nombre,
                           precio: servicio.precio,
                           imagenUrl: servicio.imagen_url,
-                        })
-                      }
+                        });
+                      }}
                       className={`btn ${yaAgregado ? 'btn-contorno' : 'btn-primario'}`}
                     >
                       <IconoCarrito className="h-4 w-4" />
@@ -156,6 +175,20 @@ export const Servicios = () => {
           })}
         </div>
       </div>
+
+      <ModalServicio
+        servicio={detalle}
+        onCerrar={() => setDetalle(null)}
+        onAgregar={(s) =>
+          agregar({
+            tipo: 'servicio',
+            id: s.id,
+            nombre: s.nombre,
+            precio: s.precio,
+            imagenUrl: s.imagen_url,
+          })
+        }
+      />
 
       <Footer />
     </div>

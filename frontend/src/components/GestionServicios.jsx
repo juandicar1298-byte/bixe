@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Toast } from './Toast';
 import { Modal } from './ui/Modal';
 import { SelectorImagen } from './ui/SelectorImagen';
+import { GaleriaImagenes } from './ui/GaleriaImagenes';
 import { PanelSeccion, EstadoVacio, ContenedorTabla } from './dashboard/PanelSeccion';
 import { IconoMas, IconoBuscar } from './ui/Iconos';
 import { formatearPrecio, formatearDuracion, resolverImagen } from '../utils/formato';
@@ -41,6 +42,7 @@ export function GestionServicios({ permitirEliminar = false }) {
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [servicioIdEditando, setServicioIdEditando] = useState(null);
+  const [galeria, setGaleria] = useState([]);
   const [formData, setFormData] = useState(servicioVacio);
   const [guardando, setGuardando] = useState(false);
 
@@ -92,13 +94,22 @@ export function GestionServicios({ permitirEliminar = false }) {
   const abrirEditar = (servicio) => {
     setServicioIdEditando(servicio.id);
     setFormData(mapearServicioAForm(servicio));
+    setGaleria(servicio.imagenes ?? []);
     setModalAbierto(true);
+  };
+
+  // Tras subir o quitar una foto se relee el servicio, que es quien manda.
+  const refrescarGaleria = async () => {
+    const data = await obtenerTodosLosServiciosApi();
+    setServicios(data);
+    setGaleria(data.find((s) => s.id === servicioIdEditando)?.imagenes ?? []);
   };
 
   const cerrarModal = () => {
     setModalAbierto(false);
     setServicioIdEditando(null);
     setFormData(servicioVacio);
+    setGaleria([]);
   };
 
   const handleChange = (e) => {
@@ -276,6 +287,21 @@ export function GestionServicios({ permitirEliminar = false }) {
             onCambiar={(url) => setFormData((prev) => ({ ...prev, imagen_url: url }))}
             onError={(mensaje) => mostrarToast(mensaje, 'error')}
           />
+
+          {servicioIdEditando ? (
+            <GaleriaImagenes
+              recurso="servicios"
+              registroId={servicioIdEditando}
+              imagenes={galeria}
+              onCambio={refrescarGaleria}
+              onError={(mensaje) => mostrarToast(mensaje, 'error')}
+            />
+          ) : (
+            <p className="rounded-xl border border-dashed border-line bg-veil px-4 py-3 text-xs text-ink-mute">
+              Guarda el servicio primero y vuelve a abrirlo para agregarle más
+              fotos a la galería.
+            </p>
+          )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>

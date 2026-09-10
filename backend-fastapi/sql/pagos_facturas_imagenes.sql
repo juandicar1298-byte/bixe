@@ -87,3 +87,13 @@ ALTER TABLE pedidos
     NOT NULL DEFAULT 'pendiente' AFTER estado;
 
 CREATE INDEX IF NOT EXISTS idx_pedidos_estado_pago ON pedidos (estado_pago);
+
+-- ------------------------------------------------------------
+-- 5. El detalle del pedido guarda también la foto del artículo
+--
+--    Igual que el nombre y el precio, la imagen se congela en el momento de
+--    la compra: así la página de pago y la factura muestran lo que el cliente
+--    vio, aunque después se cambie la foto en el catálogo.
+-- ------------------------------------------------------------
+ALTER TABLE pedido_items
+  ADD COLUMN IF NOT EXISTS imagen_url VARCHAR(255) NULL AFTER nombre;

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ModalPago } from './ModalPago';
 import { useCarrito } from '../context/carritoContexto';
 import { useAuth } from '../hooks/useAuth';
 import { crearPedidoApi } from '../services/api';
@@ -16,7 +15,6 @@ export const CarritoDrawer = () => {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const [pedidoCreado, setPedidoCreado] = useState(null);
-  const [pagando, setPagando] = useState(false);
 
   // Todos los caminos para cerrar el panel pasan por aquí, así el mensaje de
   // éxito no reaparece la próxima vez que se abra el carrito.
@@ -95,7 +93,13 @@ export const CarritoDrawer = () => {
               ahora o más tarde desde tu panel.
             </p>
             <div className="mt-3 flex w-full flex-col gap-2">
-              <button onClick={() => setPagando(true)} className="btn btn-primario w-full">
+              <button
+                onClick={() => {
+                  cerrar();
+                  navigate(`/pago/${pedidoCreado.id}`);
+                }}
+                className="btn btn-primario w-full"
+              >
                 Pagar ahora
               </button>
               <button
@@ -250,17 +254,6 @@ export const CarritoDrawer = () => {
         )}
       </aside>
 
-      <ModalPago
-        abierto={pagando}
-        pedido={pedidoCreado}
-        onCerrar={() => setPagando(false)}
-        onPagado={() => {
-          // El carrito ya se vació al confirmar; aquí solo se cierra todo.
-          setPagando(false);
-          cerrar();
-          navigate('/cliente');
-        }}
-      />
     </>
   );
 };

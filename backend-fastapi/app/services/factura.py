@@ -28,6 +28,38 @@ EMISOR = {
     "contacto": "contacto@bixe.com · +57 300 123 4567",
 }
 
+# Como se nombra cada medio de pago en la factura.
+ETIQUETA_METODO = {"tarjeta": "Tarjeta", "pse": "PSE", "nequi": "Nequi"}
+
+NOMBRE_ENTIDAD = {
+    "visa": "VISA",
+    "mastercard": "Mastercard",
+    "amex": "Amex",
+    "diners": "Diners",
+    "nequi": "Nequi",
+    "bancolombia": "Bancolombia",
+    "davivienda": "Davivienda",
+    "bbva": "BBVA Colombia",
+    "bogota": "Banco de Bogotá",
+    "occidente": "Banco de Occidente",
+    "nubank": "Nu Colombia",
+}
+
+
+def describir_medio_de_pago(pago) -> str:
+    """Ej.: «PSE · Davivienda ····5871» o «Tarjeta · VISA ····4242»."""
+    metodo = ETIQUETA_METODO.get(pago.metodo, pago.metodo.title())
+    entidad = NOMBRE_ENTIDAD.get(pago.marca, (pago.marca or "").title())
+
+    partes = [metodo]
+    if entidad and entidad != metodo:
+        partes.append(entidad)
+
+    texto = " · ".join(partes)
+    # Los cuatro dígitos van pegados a la entidad, sin separador propio.
+    return f"{texto} ····{pago.ultimos_cuatro}" if pago.ultimos_cuatro else texto
+
+
 TINTA = colors.HexColor("#0d0f13")
 TINTA_SUAVE = colors.HexColor("#4b525c")
 TINTA_TENUE = colors.HexColor("#858d99")
@@ -133,7 +165,7 @@ def generar_pdf(factura, pedido, cliente, items, pago) -> bytes:
                 '<para alignment="right"><font size="7.5" color="#858d99"><b>PEDIDO</b></font><br/>'
                 f'<font size="10" color="#0d0f13"><b>#{pedido.id}</b></font><br/>'
                 f'<font size="8.5" color="#4b525c">Fecha: {pedido.fecha_creacion.strftime("%d/%m/%Y")}<br/>'
-                f'Medio de pago: {pago.marca.title()} ····{pago.ultimos_cuatro}<br/>'
+                f'Medio de pago: {describir_medio_de_pago(pago)}<br/>'
                 f'Referencia: {pago.referencia}</font></para>',
                 e["normal"],
             ),

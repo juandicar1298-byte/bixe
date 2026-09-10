@@ -52,6 +52,7 @@ async def crear(
                 tipo=item["tipo"],
                 referencia_id=articulo.id,
                 nombre=articulo.nombre,
+                imagen_url=articulo.imagen_url,
                 precio_unitario=precio,
                 cantidad=cantidad,
             )

@@ -11,6 +11,7 @@ import { Modelos } from './pages/Modelos';
 import { ModeloDetalle } from './pages/ModeloDetalle';
 import { Servicios } from './pages/Servicios';
 import { RestablecerPassword } from './pages/RestablecerPassword';
+import { PaginaPago } from './pages/PaginaPago';
 import { AdminPanel } from './pages/AdminPanel';
 import { ClientePanel } from './pages/ClientePanel';
 import { EmpleadoPanel } from './pages/EmpleadoPanel';
@@ -27,6 +28,15 @@ function App() {
         <Route path="/modelos/:id" element={<ModeloDetalle />} />
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/restablecer" element={<RestablecerPassword />} />
+
+        <Route
+          path="/pago/:pedidoId"
+          element={
+            <RutaProtegida>
+              <PaginaPago />
+            </RutaProtegida>
+          }
+        />
 
         <Route
           path="/admin"

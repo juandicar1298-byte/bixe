@@ -133,6 +133,7 @@ class PedidoItem(Base):
     # El nombre y el precio se congelan en el momento de la compra, para que el
     # historial no cambie si después se edita el catálogo.
     nombre: Mapped[str] = mapped_column(String(120))
+    imagen_url: Mapped[str | None] = mapped_column(String(255))
     precio_unitario: Mapped[float] = mapped_column(Numeric(12, 2))
     cantidad: Mapped[int] = mapped_column(Integer, default=1)
 

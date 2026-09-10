@@ -47,3 +47,16 @@ export const resolverImagen = (url) => {
   if (/^(https?:)?\/\//i.test(url) || url.startsWith('data:')) return url;
   return `${API_ORIGEN}${url.startsWith('/') ? '' : '/'}${url}`;
 };
+
+export const PORCENTAJE_IVA = 19;
+
+/**
+ * Separa la base gravable y el IVA contenido en un total que ya lo incluye.
+ * Es el mismo cálculo que hace el backend al emitir la factura, y sirve para
+ * enseñar el desglose en la página de pago antes de cobrar.
+ */
+export const desglosarIva = (total, porcentaje = PORCENTAJE_IVA) => {
+  const bruto = Number(total) || 0;
+  const base = Math.round((bruto / (1 + porcentaje / 100)) * 100) / 100;
+  return { base, iva: Math.round((bruto - base) * 100) / 100, total: bruto };
+};

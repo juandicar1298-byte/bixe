@@ -7,18 +7,46 @@ from app.dependencias import PedidoExistente, SesionDep, UsuarioActual
 from app.errores import RecursoNoEncontrado
 from app.schemas.error import RESPUESTAS_API
 from app.schemas.pago import (
-    DatosDeTarjeta,
+    BancoDisponible,
+    DatosDePago,
     FacturaRespuesta,
+    MetodoDisponible,
     PagoRespuesta,
     ResultadoDelPago,
 )
+from app.services import pasarela
 from app.services.factura import generar_pdf
 
-router = APIRouter(prefix="/api/pedidos", tags=["Pagos"], responses=RESPUESTAS_API)
+router = APIRouter(prefix="/api", tags=["Pagos"], responses=RESPUESTAS_API)
+
+
+@router.get(
+    "/pagos/metodos",
+    response_model=list[MetodoDisponible],
+    summary="Medios de pago disponibles",
+    description="Los que muestra la página de pago. PSE trae además la lista "
+    "de bancos.",
+)
+async def listar_metodos():
+    return [
+        MetodoDisponible(
+            codigo=codigo,
+            nombre=nombre,
+            bancos=(
+                [
+                    BancoDisponible(codigo=c, nombre=n)
+                    for c, n in pasarela.BANCOS_PSE.items()
+                ]
+                if codigo == "pse"
+                else []
+            ),
+        )
+        for codigo, nombre in pasarela.METODOS.items()
+    ]
 
 
 @router.post(
-    "/{pedido_id}/pago",
+    "/pedidos/{pedido_id}/pago",
     response_model=ResultadoDelPago,
     status_code=status.HTTP_201_CREATED,
     summary="Pagar un pedido",
@@ -36,10 +64,10 @@ async def pagar_pedido(
     sesion: SesionDep,
     pedido: PedidoExistente,
     usuario: UsuarioActual,
-    tarjeta: DatosDeTarjeta,
+    datos: DatosDePago,
 ):
     pago, factura = await crud_pagos.cobrar(
-        sesion, pedido, tarjeta.model_dump(), solicitante_id=usuario.id
+        sesion, pedido, datos.model_dump(), solicitante_id=usuario.id
     )
 
     # Un rechazo no es un error del sistema: se responde 201 con el detalle
@@ -59,7 +87,7 @@ async def pagar_pedido(
 
 
 @router.get(
-    "/{pedido_id}/pago",
+    "/pedidos/{pedido_id}/pago",
     response_model=PagoRespuesta,
     summary="Consultar el pago de un pedido",
 )
@@ -77,7 +105,7 @@ async def consultar_pago(
 
 
 @router.get(
-    "/{pedido_id}/factura",
+    "/pedidos/{pedido_id}/factura",
     response_model=FacturaRespuesta,
     summary="Consultar la factura de un pedido",
 )
@@ -89,7 +117,7 @@ async def consultar_factura(
 
 
 @router.get(
-    "/{pedido_id}/factura.pdf",
+    "/pedidos/{pedido_id}/factura.pdf",
     summary="Descargar la factura en PDF",
     description="Devuelve el PDF de la factura. Solo el dueño del pedido o el "
     "personal pueden descargarlo.",

@@ -219,6 +219,8 @@ export const subirImagenApi = (archivo) => {
 
 // -------------------------- Pagos y facturación --------------------------
 
+export const obtenerMetodosPagoApi = () => peticion('/pagos/metodos');
+
 export const pagarPedidoApi = (pedidoId, tarjeta) =>
   peticion(`/pedidos/${pedidoId}/pago`, { metodo: 'POST', cuerpo: tarjeta });
 

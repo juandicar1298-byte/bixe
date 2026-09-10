@@ -161,29 +161,42 @@ caduque su sesión.
 
 ## Pagos y facturación
 
+Todo ocurre en una sola página: **`/pago/:pedidoId`**. A la izquierda se ve lo
+que se está comprando (con foto, cantidades y desglose de IVA) y a la derecha
+se elige el medio de pago. En cuanto se aprueba, la factura aparece ahí mismo,
+lista para descargar.
+
 La pasarela es **simulada**: no mueve dinero real ni habla con ningún
-proveedor. Las validaciones sí son las de verdad — algoritmo de Luhn,
-vigencia de la tarjeta y longitud del CVV según la marca.
+proveedor. Las validaciones sí son las de verdad — algoritmo de Luhn, vigencia
+de la tarjeta, longitud del CVV según la marca y formato del celular.
 
-Tarjetas de prueba (todas pasan Luhn, así que sirven para demostrar cada
-camino):
+### Medios de pago y datos de prueba
 
-| Número | Qué hace |
-|---|---|
-| `4242 4242 4242 4242` | Aprueba el pago |
-| `5555 5555 5555 4444` | Aprueba (Mastercard) |
-| `4000 0000 0000 9995` | Fondos insuficientes |
-| `4000 0000 0000 0002` | La rechaza el banco emisor |
-| `4000 0000 0000 0069` | Tarjeta vencida |
+| Medio | Dato | Qué hace |
+|---|---|---|
+| Tarjeta | `4242 4242 4242 4242` | Aprueba |
+| Tarjeta | `5555 5555 5555 4444` | Aprueba (Mastercard) |
+| Tarjeta | `4000 0000 0000 9995` | Fondos insuficientes |
+| Tarjeta | `4000 0000 0000 0002` | La rechaza el banco emisor |
+| Tarjeta | `4000 0000 0000 0069` | Tarjeta vencida |
+| PSE | Documento `1036425871` | Aprueba |
+| PSE | Documento `10000000` | El banco rechaza el débito |
+| Nequi | Celular `3012345678` | Aprueba |
+| Nequi | Celular `3000000000` | Sin saldo |
 
-Del número de tarjeta solo se guardan **la marca y los cuatro últimos
-dígitos**. El número completo y el CVV no se almacenan en ningún momento.
+La página trae un botón para rellenar cada uno de estos datos sin escribirlos.
+
+Solo se guardan **la entidad** (marca de la tarjeta o banco) y **los cuatro
+últimos dígitos** del identificador. El número completo de la tarjeta y el CVV
+no se almacenan en ningún momento.
 
 Cuando el pago se aprueba se emite la factura con consecutivo automático
-(`BIXE-000001`, `BIXE-000002`…) y queda descargable en PDF desde el panel del
-cliente y desde el del administrador. Como los precios del catálogo ya
-incluyen IVA, la factura **no suma nada al total**: descompone cuánto de lo
-que pagó el cliente corresponde al impuesto del 19%.
+(`BIXE-000001`, `BIXE-000002`…), descargable en PDF desde la propia página, el
+panel del cliente y el del administrador. Como los precios del catálogo ya
+incluyen IVA, la factura **no suma nada al total**: descompone cuánto de lo que
+pagó el cliente corresponde al impuesto del 19%.
+
+Pago, factura y actualización del pedido ocurren en la misma transacción.
 
 ## Galería de fotos
 

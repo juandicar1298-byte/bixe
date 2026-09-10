@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Toast } from './Toast';
 import { Modal } from './ui/Modal';
 import { PanelSeccion, EstadoVacio, ContenedorTabla } from './dashboard/PanelSeccion';
-import { ModalPago } from './ModalPago';
 import { CLASE_INSIGNIA_ESTADO, CLASE_INSIGNIA_PAGO } from '../utils/pedidos';
 import { formatearPrecio, formatearFechaHora } from '../utils/formato';
 import {
@@ -14,13 +14,13 @@ import {
 } from '../services/api';
 
 export function MisPedidos() {
+  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
   const [detalle, setDetalle] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
-  const [pedidoAPagar, setPedidoAPagar] = useState(null);
 
   const [toastMensaje, setToastMensaje] = useState('');
   const [toastTipo, setToastTipo] = useState('exito');
@@ -161,7 +161,7 @@ export function MisPedidos() {
                       ) : (
                         p.estado !== 'cancelado' && (
                           <button
-                            onClick={() => setPedidoAPagar(p)}
+                            onClick={() => navigate(`/pago/${p.id}`)}
                             className="accion text-brand-deep hover:underline"
                           >
                             Pagar
@@ -235,16 +235,6 @@ export function MisPedidos() {
           </div>
         )}
       </Modal>
-
-      <ModalPago
-        abierto={Boolean(pedidoAPagar)}
-        pedido={pedidoAPagar}
-        onCerrar={() => setPedidoAPagar(null)}
-        onPagado={() => {
-          cargarPedidos();
-          mostrarToast('Pago aprobado. Ya puedes descargar la factura.');
-        }}
-      />
 
       <Toast
         mensaje={toastMensaje}

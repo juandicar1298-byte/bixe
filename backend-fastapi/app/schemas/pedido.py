@@ -57,6 +57,7 @@ class ItemRespuesta(BaseModel):
     tipo: str
     referencia_id: int
     nombre: str
+    imagen_url: str | None
     precio_unitario: float
     cantidad: int
 

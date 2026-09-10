@@ -1,18 +1,22 @@
 from datetime import date, datetime
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class DatosDeTarjeta(BaseModel):
-    """Lo que envía el formulario de pago.
+class _PagoBase(BaseModel):
+    """Nada de lo que llega aquí se guarda tal cual.
 
-    Nada de esto se guarda: el backend valida, cobra y solo persiste la marca
-    y los cuatro últimos dígitos. El CVV no se almacena en ningún caso.
+    El backend valida, cobra y solo persiste la entidad (marca o banco) y los
+    cuatro últimos dígitos del identificador. El CVV no se almacena nunca.
     """
 
+
+class PagoConTarjeta(_PagoBase):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "metodo": "tarjeta",
                 "numero": "4242 4242 4242 4242",
                 "titular": "LAURA GOMEZ",
                 "mes": 12,
@@ -22,6 +26,7 @@ class DatosDeTarjeta(BaseModel):
         }
     )
 
+    metodo: Literal["tarjeta"]
     numero: str = Field(min_length=13, max_length=23, description="Con o sin espacios.")
     titular: str = Field(min_length=3, max_length=60)
     mes: int = Field(ge=1, le=12)
@@ -42,12 +47,65 @@ class DatosDeTarjeta(BaseModel):
         return " ".join(valor.split()).upper()
 
     @model_validator(mode="after")
-    def tarjeta_vigente(self) -> "DatosDeTarjeta":
+    def tarjeta_vigente(self) -> "PagoConTarjeta":
         """Regla de negocio: la tarjeta no puede estar vencida."""
         hoy = date.today()
         if (self.anio, self.mes) < (hoy.year, hoy.month):
             raise ValueError("La tarjeta está vencida.")
         return self
+
+
+class PagoConPse(_PagoBase):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "metodo": "pse",
+                "banco": "bancolombia",
+                "tipo_persona": "natural",
+                "tipo_documento": "CC",
+                "numero_documento": "1036425871",
+            }
+        }
+    )
+
+    metodo: Literal["pse"]
+    banco: str = Field(min_length=2, max_length=30)
+    tipo_persona: Literal["natural", "juridica"] = "natural"
+    tipo_documento: Literal["CC", "CE", "NIT"] = "CC"
+    numero_documento: str = Field(min_length=6, max_length=15, pattern=r"^\d{6,15}$")
+
+
+class PagoConNequi(_PagoBase):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"metodo": "nequi", "celular": "3001234567"}}
+    )
+
+    metodo: Literal["nequi"]
+    celular: str = Field(
+        min_length=10,
+        max_length=10,
+        pattern=r"^3\d{9}$",
+        description="Diez dígitos, empezando por 3.",
+    )
+
+
+# La unión discriminada hace que FastAPI elija el esquema según "metodo" y
+# que Swagger muestre los tres formularios por separado.
+DatosDePago = Annotated[
+    Union[PagoConTarjeta, PagoConPse, PagoConNequi],
+    Field(discriminator="metodo"),
+]
+
+
+class BancoDisponible(BaseModel):
+    codigo: str
+    nombre: str
+
+
+class MetodoDisponible(BaseModel):
+    codigo: str
+    nombre: str
+    bancos: list[BancoDisponible] = []
 
 
 class PagoRespuesta(BaseModel):
@@ -57,6 +115,7 @@ class PagoRespuesta(BaseModel):
     pedido_id: int
     referencia: str
     metodo: str
+    # marca guarda la entidad: la marca de la tarjeta, el banco de PSE o "nequi".
     marca: str | None
     ultimos_cuatro: str | None
     titular: str | None

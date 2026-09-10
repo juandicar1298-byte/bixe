@@ -42,7 +42,7 @@ async def obtener_factura_o_fallar(sesion: AsyncSession, pedido_id: int) -> Fact
 
 
 async def cobrar(
-    sesion: AsyncSession, pedido: Pedido, tarjeta: dict, solicitante_id: int
+    sesion: AsyncSession, pedido: Pedido, datos: dict, solicitante_id: int
 ) -> tuple[Pago, Factura | None]:
     """Cobra el pedido y, si la pasarela aprueba, emite la factura.
 
@@ -61,21 +61,15 @@ async def cobrar(
     # El monto es el del pedido, no uno que venga del navegador.
     monto = Decimal(str(pedido.total))
 
-    resultado = pasarela.procesar(
-        numero=tarjeta["numero"],
-        mes=tarjeta["mes"],
-        anio=tarjeta["anio"],
-        cvv=tarjeta["cvv"],
-        titular=tarjeta["titular"],
-    )
+    resultado = pasarela.procesar(datos)
 
     pago = Pago(
         pedido_id=pedido.id,
         referencia=resultado.referencia,
-        metodo="tarjeta",
-        marca=resultado.marca,
+        metodo=resultado.metodo,
+        marca=resultado.entidad,
         ultimos_cuatro=resultado.ultimos_cuatro,
-        titular=tarjeta["titular"],
+        titular=resultado.titular,
         monto=monto,
         estado="aprobado" if resultado.aprobado else "rechazado",
         motivo_rechazo=resultado.motivo,

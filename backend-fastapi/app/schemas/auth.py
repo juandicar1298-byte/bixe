@@ -69,8 +69,39 @@ class RestablecerContrasena(BaseModel):
         return self
 
 
+class VerificarCodigo(BaseModel):
+    """Segundo paso de la recuperación: los seis dígitos que llegaron al correo."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"email": "ana.ruiz@ejemplo.com", "codigo": "418207"}
+        }
+    )
+
+    email: EmailStr
+    codigo: str = Field(
+        pattern=r"^\d{6}$",
+        description="Los seis dígitos del correo, sin espacios.",
+    )
+
+    @field_validator("codigo", mode="before")
+    @classmethod
+    def limpiar(cls, valor: str) -> str:
+        """Admite que se pegue con espacios o guiones: «418 207», «418-207»."""
+        if isinstance(valor, str):
+            return "".join(caracter for caracter in valor if caracter.isdigit())
+        return valor
+
+
+class TokenDeRecuperacion(BaseModel):
+    """Lo que se devuelve cuando el código es correcto."""
+
+    token: str
+
+
 class MensajeSimple(BaseModel):
     mensaje: str
-    # Solo se rellena en desarrollo cuando el correo no está configurado:
-    # permite probar el flujo sin servidor SMTP.
+    # Los dos siguientes solo se rellenan en desarrollo cuando el correo no
+    # está configurado: permiten probar el flujo sin servidor SMTP.
     enlace_recuperacion: str | None = None
+    codigo_recuperacion: str | None = None

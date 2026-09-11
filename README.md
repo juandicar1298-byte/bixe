@@ -31,7 +31,7 @@ Hacen falta **MySQL/MariaDB**, **Node.js 18+** y **Python 3.12+**.
 ### 1. Base de datos
 
 Enciende MySQL (en XAMPP, el botón **Start** de MySQL). Después crea la base
-`bixe_db`, carga el esquema y aplica las dos migraciones **en este orden**:
+`bixe_db`, carga el esquema y aplica las tres migraciones **en este orden**:
 
 ```
 mysql -u root -p bixe_db < backend/sql/servicios_pedidos.sql
@@ -41,9 +41,14 @@ mysql -u root -p bixe_db < backend/sql/servicios_pedidos.sql
 mysql -u root -p bixe_db < backend-fastapi/sql/pagos_facturas_imagenes.sql
 ```
 
+```
+mysql -u root -p bixe_db < backend-fastapi/sql/codigo_recuperacion.sql
+```
+
 La primera crea servicios y pedidos; la segunda, las galerías de fotos, los
-pagos y las facturas. Las dos son idempotentes: se pueden ejecutar varias
-veces sin duplicar nada.
+pagos y las facturas; la tercera, el código de verificación para recuperar la
+contraseña. Las tres son idempotentes: se pueden ejecutar varias veces sin
+duplicar nada.
 
 ### 2. Arrancar el proyecto
 
@@ -103,9 +108,10 @@ los nombres de las variables y sin valores reales; el `.env` está en
 ### Correo de recuperación
 
 Mientras falte alguno de `SMTP_HOST`, `SMTP_USUARIO` o `SMTP_PASSWORD`, la API
-**no envía nada**: escribe el enlace de recuperación en el log del servidor y
-lo devuelve en la respuesta (solo con `ENTORNO=desarrollo`), de modo que el
-flujo se puede probar completo sin servidor de correo.
+**no envía nada**: escribe el código y el enlace de recuperación en el log del
+servidor y los devuelve en la respuesta (solo con `ENTORNO=desarrollo`), de
+modo que el flujo se puede probar completo sin servidor de correo. La pantalla
+de recuperación enseña ahí mismo el código en ese caso.
 
 Para activarlo con Gmail hace falta una *contraseña de aplicación*, que **no
 es la contraseña de la cuenta**: se crea en Cuenta de Google → Seguridad →
@@ -144,6 +150,32 @@ El primero se conecta e inicia sesión sin enviar nada; el segundo manda además
 un mensaje de prueba. Enseña la configuración (la contraseña nunca: solo
 cuántos caracteres tiene), avisa de los errores típicos antes de conectarse y
 traduce el fallo de SMTP a algo que se pueda arreglar.
+
+### Cómo se recupera la contraseña
+
+Son tres pasos, todos en la misma pantalla (`/login` → «¿Olvidaste tu
+contraseña?»), sin cambiar de página:
+
+1. **El correo.** `POST /api/auth/recuperar` emite un **código de seis
+   dígitos** y lo envía. La respuesta es siempre la misma exista o no la
+   cuenta, para que el formulario no sirva para averiguar qué correos están
+   registrados.
+2. **El código.** `POST /api/auth/verificar-codigo` lo cambia por un token de
+   un solo uso. Las seis casillas saltan solas al escribir y admiten pegar el
+   código entero.
+3. **La contraseña nueva.** `POST /api/auth/restablecer` la fija con ese token.
+
+Seis dígitos son solo un millón de combinaciones, así que el código se apoya en
+cuatro defensas: caduca a los 30 minutos, sirve una sola vez, **a los cinco
+intentos fallidos queda inutilizado** y pedir uno nuevo invalida el anterior.
+Además no se emiten dos códigos al mismo usuario con menos de un minuto de
+diferencia, para que nadie use el formulario para inundar una bandeja ajena;
+ese freno actúa en silencio, porque anunciarlo también delataría que la cuenta
+existe.
+
+El correo lleva el código en el asunto —así se lee en la notificación del móvil
+sin abrirlo— y además un botón que entra directamente, para quien prefiera no
+copiar nada.
 
 ---
 
@@ -302,7 +334,7 @@ nada.
 ## Pruebas de la API
 
 En `backend-fastapi/postman/` hay una colección lista para importar en Postman,
-con 57 peticiones repartidas en 10 carpetas, que cubren GET, POST, PUT, PATCH
+con 60 peticiones repartidas en 10 carpetas, que cubren GET, POST, PUT, PATCH
 y DELETE, incluidos los casos de error (401 sin token, 403 sin permiso, 404,
 409 y 422).
 

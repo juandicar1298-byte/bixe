@@ -15,8 +15,10 @@ from app.schemas.auth import (
     RestablecerContrasena,
     SolicitudRecuperacion,
     Token,
+    TokenDeRecuperacion,
     TokenOAuth2,
     UsuarioSesion,
+    VerificarCodigo,
 )
 from app.schemas.error import RESPUESTAS_API
 from app.services.correo import ErrorAlEnviarCorreo, enviar_recuperacion
@@ -28,8 +30,8 @@ router = APIRouter(prefix="/api/auth", tags=["Autenticación"], responses=RESPUE
 # Mensaje único para la recuperación: responder cosas distintas según si el
 # correo existe permitiría averiguar qué cuentas están registradas.
 MENSAJE_RECUPERACION = (
-    "Si el correo corresponde a una cuenta activa, te enviamos un enlace para "
-    "restablecer la contraseña. Revisa tu bandeja de entrada."
+    "Si el correo corresponde a una cuenta activa, te enviamos un código de "
+    "seis dígitos. Revisa tu bandeja de entrada."
 )
 
 
@@ -106,23 +108,54 @@ async def solicitar_recuperacion(sesion: SesionDep, datos: SolicitudRecuperacion
     if usuario is None or not usuario.activo:
         return MensajeSimple(mensaje=MENSAJE_RECUPERACION)
 
-    token = await crud_usuarios.crear_token_recuperacion(
+    emitido = await crud_usuarios.crear_codigo_recuperacion(
         sesion, usuario, configuracion.minutos_expiracion_recuperacion
     )
+
+    # None significa que ya se le envió un código hace menos de un minuto. La
+    # respuesta es la misma de siempre: quien pide dos veces seguidas ve lo
+    # mismo que quien pide una, y el código que sirve es el que ya recibió.
+    if emitido is None:
+        return MensajeSimple(mensaje=MENSAJE_RECUPERACION)
+
+    codigo, token = emitido
     enlace = f"{configuracion.url_frontend}/restablecer?token={token}"
 
     try:
-        enviado = await enviar_recuperacion(usuario.email, usuario.nombre, enlace)
+        enviado = await enviar_recuperacion(
+            usuario.email, usuario.nombre, codigo, enlace
+        )
     except ErrorAlEnviarCorreo:
-        # El token ya está creado; el operador ve el fallo en el log.
+        # El código ya está creado; el operador ve el fallo en el log.
         enviado = False
 
-    # En desarrollo, si el correo no salió, se devuelve el enlace para poder
-    # probar el flujo. En producción esto nunca se expone.
+    # En desarrollo, si el correo no salió, se devuelven el código y el enlace
+    # para poder probar el flujo. En producción esto nunca se expone.
     if not enviado and configuracion.entorno == "desarrollo":
-        return MensajeSimple(mensaje=MENSAJE_RECUPERACION, enlace_recuperacion=enlace)
+        return MensajeSimple(
+            mensaje=MENSAJE_RECUPERACION,
+            enlace_recuperacion=enlace,
+            codigo_recuperacion=codigo,
+        )
 
     return MensajeSimple(mensaje=MENSAJE_RECUPERACION)
+
+
+@router.post(
+    "/verificar-codigo",
+    response_model=TokenDeRecuperacion,
+    summary="Canjear el código de seis dígitos",
+    description=(
+        "Comprueba el código que llegó por correo y devuelve el token con el "
+        "que se fija la contraseña nueva. A los cinco intentos fallidos el "
+        "código queda inutilizado y hay que pedir otro."
+    ),
+)
+async def verificar_codigo(sesion: SesionDep, datos: VerificarCodigo):
+    token = await crud_usuarios.canjear_codigo_recuperacion(
+        sesion, datos.email, datos.codigo
+    )
+    return TokenDeRecuperacion(token=token)
 
 
 @router.post(

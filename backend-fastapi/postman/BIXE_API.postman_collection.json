@@ -190,6 +190,60 @@
               "raw": "{\n  \"email\": \"ana.ruiz@ejemplo.com\"\n}"
             }
           }
+        },
+        {
+          "name": "Canjear codigo de recuperacion (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/auth/verificar-codigo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.ruiz@ejemplo.com\",\n  \"codigo\": \"418207\"\n}"
+            },
+            "description": "Los seis digitos que llegan al correo se cambian por el token con el que se fija la contrasena nueva. Para probarlo hay que poner el codigo real: con ENTORNO=desarrollo y sin SMTP configurado, la peticion anterior lo devuelve en la respuesta."
+          }
+        },
+        {
+          "name": "Codigo equivocado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/auth/verificar-codigo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.ruiz@ejemplo.com\",\n  \"codigo\": \"000000\"\n}"
+            },
+            "description": "Mismo mensaje tanto si el codigo esta mal como si el correo no existe: distinguirlos permitiria averiguar que cuentas hay registradas. A los cinco fallos el codigo queda inutilizado."
+          }
+        },
+        {
+          "name": "Codigo con formato invalido (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/auth/verificar-codigo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.ruiz@ejemplo.com\",\n  \"codigo\": \"12ab56\"\n}"
+            },
+            "description": "El codigo son seis digitos; las letras las rechaza Pydantic antes de tocar la base de datos."
+          }
         }
       ]
     },

@@ -98,6 +98,23 @@ class TokenDeRecuperacionInvalido(ConflictoDeNegocio):
         )
 
 
+class CodigoDeRecuperacionInvalido(ConflictoDeNegocio):
+    """Código equivocado, caducado, ya usado o con los intentos agotados.
+
+    Los cuatro casos comparten mensaje a propósito. Distinguirlos le diría a
+    quien está probando códigos a ciegas si el correo existe y si le quedan
+    intentos, y eso es justo lo que no queremos contarle.
+    """
+
+    codigo = "codigo_recuperacion_invalido"
+
+    def __init__(self):
+        super().__init__(
+            "El código no es válido o ya caducó. Pide uno nuevo desde la "
+            "pantalla de inicio de sesión."
+        )
+
+
 class ImagenInvalida(ErrorDeDominio):
     codigo = "imagen_invalida"
 

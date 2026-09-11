@@ -176,6 +176,15 @@ class RecuperacionContrasena(Base):
         "id_usuario", ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), index=True
     )
     token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+
+    # Los seis dígitos que viajan en el correo. El token sigue existiendo
+    # porque es lo que se canjea al final: el código solo sirve para obtenerlo.
+    codigo: Mapped[str] = mapped_column(String(6), default="")
+
+    # Intentos fallidos sobre el código. Es la única defensa real de seis
+    # dígitos: sin límite, probarlos todos es cuestión de un rato.
+    intentos: Mapped[int] = mapped_column(default=0)
+
     expira_en: Mapped[datetime] = mapped_column(DateTime)
     usado_en: Mapped[datetime | None] = mapped_column(DateTime)
     fecha_creacion: Mapped[datetime] = mapped_column(

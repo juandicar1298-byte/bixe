@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from secrets import token_urlsafe
+from secrets import compare_digest, randbelow, token_urlsafe
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.seguridad import hashear_contrasena, verificar_contrasena
 from app.errores import (
+    CodigoDeRecuperacionInvalido,
     ConflictoDeNegocio,
     CorreoYaRegistrado,
     DocumentoYaRegistrado,
@@ -179,30 +180,112 @@ async def contar(sesion: AsyncSession) -> int:
 # ------------------------ Recuperación de contraseña ------------------------
 
 
-async def crear_token_recuperacion(
+MAXIMO_INTENTOS = 5
+SEGUNDOS_ENTRE_ENVIOS = 60
+
+
+def _ahora() -> datetime:
+    """UTC sin zona: las columnas DATETIME de MySQL no la guardan."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+async def crear_codigo_recuperacion(
     sesion: AsyncSession, usuario: Usuario, minutos_validez: int
-) -> str:
-    """Invalida los tokens anteriores del usuario y emite uno nuevo."""
-    pendientes = await sesion.scalars(
-        select(RecuperacionContrasena).where(
-            RecuperacionContrasena.usuario_id == usuario.id,
-            RecuperacionContrasena.usado_en.is_(None),
+) -> tuple[str, str] | None:
+    """Invalida las recuperaciones anteriores y emite un código nuevo.
+
+    Devuelve la pareja (código de seis dígitos, token), o None si al usuario ya
+    se le envió un código hace menos de un minuto. Ese enfriamiento evita que
+    alguien use el formulario para inundar de correos una bandeja ajena; se
+    aplica en silencio, sin decirlo en la respuesta, porque contarlo revelaría
+    que la dirección está registrada.
+    """
+    ahora = _ahora()
+
+    pendientes = list(
+        await sesion.scalars(
+            select(RecuperacionContrasena).where(
+                RecuperacionContrasena.usuario_id == usuario.id,
+                RecuperacionContrasena.usado_en.is_(None),
+            )
         )
     )
-    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # El momento de creación se deduce de expira_en y no se lee de
+    # fecha_creacion: esa columna la rellena MySQL con NOW(), que va en la hora
+    # local del servidor, mientras que aquí se trabaja en UTC. Restar una de
+    # otra da la diferencia de zona horaria y el enfriamiento no se aplicaría
+    # nunca.
+    validez = timedelta(minutes=minutos_validez)
+    reciente = any(
+        (ahora - (pendiente.expira_en - validez)).total_seconds() < SEGUNDOS_ENTRE_ENVIOS
+        for pendiente in pendientes
+    )
+    if reciente:
+        return None
+
     for anterior in pendientes:
         anterior.usado_en = ahora
 
+    # randbelow usa el generador criptográfico del sistema: los seis dígitos no
+    # se pueden predecir a partir de los anteriores, como sí pasaría con random.
+    codigo = f"{randbelow(1_000_000):06d}"
     token = token_urlsafe(32)[:64]
+
     sesion.add(
         RecuperacionContrasena(
             usuario_id=usuario.id,
             token=token,
+            codigo=codigo,
             expira_en=ahora + timedelta(minutes=minutos_validez),
         )
     )
     await sesion.commit()
-    return token
+    return codigo, token
+
+
+async def canjear_codigo_recuperacion(
+    sesion: AsyncSession, email: str, codigo: str
+) -> str:
+    """Cambia el código de seis dígitos por el token que completa el cambio.
+
+    Cualquier problema —correo desconocido, código equivocado, caducado o con
+    los intentos agotados— sale con la misma excepción, para no ir diciendo por
+    el camino qué parte era la que fallaba.
+    """
+    fallo = CodigoDeRecuperacionInvalido()
+
+    usuario = await obtener_por_email(sesion, email)
+    if usuario is None or not usuario.activo:
+        raise fallo
+
+    recuperacion = await sesion.scalar(
+        select(RecuperacionContrasena)
+        .where(
+            RecuperacionContrasena.usuario_id == usuario.id,
+            RecuperacionContrasena.usado_en.is_(None),
+        )
+        .order_by(RecuperacionContrasena.id.desc())
+        .limit(1)
+    )
+
+    if recuperacion is None or recuperacion.expira_en < _ahora():
+        raise fallo
+
+    if recuperacion.intentos >= MAXIMO_INTENTOS:
+        # Se cierra para que no siga contando intentos indefinidamente.
+        recuperacion.usado_en = _ahora()
+        await sesion.commit()
+        raise fallo
+
+    # compare_digest tarda lo mismo acierte o falle, así que el tiempo de
+    # respuesta no deja adivinar cuántos dígitos iban bien.
+    if not compare_digest(recuperacion.codigo, codigo):
+        recuperacion.intentos += 1
+        await sesion.commit()
+        raise fallo
+
+    return recuperacion.token
 
 
 async def restablecer_con_token(

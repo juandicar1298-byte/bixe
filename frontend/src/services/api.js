@@ -112,6 +112,9 @@ export const iniciarSesion = (email, contrasena) =>
 export const solicitarRecuperacionApi = (email) =>
   peticion('/auth/recuperar', { metodo: 'POST', cuerpo: { email } });
 
+export const verificarCodigoApi = (email, codigo) =>
+  peticion('/auth/verificar-codigo', { metodo: 'POST', cuerpo: { email, codigo } });
+
 export const restablecerContrasenaApi = (datos) =>
   peticion('/auth/restablecer', { metodo: 'POST', cuerpo: datos });
 

@@ -6,6 +6,8 @@ __pycache__/
 
 # Entorno (nunca se sube: contiene credenciales)
 .env
+.env.*
+!.env.example
 .env.local
 
 # Compilados y temporales

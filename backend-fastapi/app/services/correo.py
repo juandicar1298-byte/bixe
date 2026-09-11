@@ -8,14 +8,38 @@ from app.core.configuracion import configuracion
 
 logger = logging.getLogger("bixe.correo")
 
+TIEMPO_LIMITE = 15
+
 
 class ErrorAlEnviarCorreo(Exception):
     """El servidor SMTP rechazó el mensaje o no respondió."""
 
 
+def abrir_conexion() -> smtplib.SMTP:
+    """Abre la conexión con el servidor de correo, ya cifrada.
+
+    El puerto 465 habla TLS desde el primer byte y el 587 empieza en claro y
+    sube a TLS con STARTTLS. Equivocar ese par puerto/modo es el tropiezo más
+    común al configurar esto, así que se decide aquí a partir del puerto en
+    lugar de pedirle al usuario que lo acierte en el .env.
+
+    La usa también scripts/probar_correo.py, para que la comprobación se haga
+    exactamente por el mismo camino que el envío de verdad.
+    """
+    if configuracion.smtp_puerto == 465:
+        return smtplib.SMTP_SSL(configuracion.smtp_host, 465, timeout=TIEMPO_LIMITE)
+
+    servidor = smtplib.SMTP(
+        configuracion.smtp_host, configuracion.smtp_puerto, timeout=TIEMPO_LIMITE
+    )
+    if configuracion.smtp_tls:
+        servidor.starttls()
+    return servidor
+
+
 def _construir_mensaje(destinatario: str, asunto: str, texto: str, html: str) -> EmailMessage:
     mensaje = EmailMessage()
-    mensaje["From"] = configuracion.smtp_remitente
+    mensaje["From"] = configuracion.remitente_efectivo
     mensaje["To"] = destinatario
     mensaje["Subject"] = asunto
     mensaje.set_content(texto)
@@ -25,9 +49,7 @@ def _construir_mensaje(destinatario: str, asunto: str, texto: str, html: str) ->
 
 def _enviar_sincrono(mensaje: EmailMessage) -> None:
     """smtplib bloquea, así que esta función se ejecuta en un hilo aparte."""
-    with smtplib.SMTP(configuracion.smtp_host, configuracion.smtp_puerto, timeout=15) as servidor:
-        if configuracion.smtp_tls:
-            servidor.starttls()
+    with abrir_conexion() as servidor:
         servidor.login(configuracion.smtp_usuario, configuracion.smtp_password)
         servidor.send_message(mensaje)
 

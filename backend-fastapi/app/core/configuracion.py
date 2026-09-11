@@ -49,12 +49,24 @@ class Configuracion(BaseSettings):
     smtp_puerto: int = 587
     smtp_usuario: str = ""
     smtp_password: str = ""
-    smtp_remitente: str = "BIXE <no-responder@bixe.com>"
+    smtp_remitente: str = ""
     smtp_tls: bool = True
 
     @property
     def correo_configurado(self) -> bool:
         return bool(self.smtp_host and self.smtp_usuario and self.smtp_password)
+
+    @property
+    def remitente_efectivo(self) -> str:
+        """Desde qué dirección sale el correo.
+
+        Gmail y casi todos los proveedores gratuitos exigen que el remitente
+        sea la misma cuenta con la que se inicia sesión: si no coincide,
+        rechazan el envío o reescriben la cabecera. Por eso, dejar
+        SMTP_REMITENTE vacío es lo normal y lo que se recomienda; solo tiene
+        sentido rellenarlo con un dominio propio.
+        """
+        return self.smtp_remitente or self.smtp_usuario
 
 
 configuracion = Configuracion()

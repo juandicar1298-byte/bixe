@@ -102,14 +102,43 @@ los nombres de las variables y sin valores reales; el `.env` está en
 
 ### Correo de recuperación
 
-Si `SMTP_HOST` queda vacío, la API **no envía nada**: escribe el enlace de
-recuperación en el log del servidor y lo devuelve en la respuesta (solo en
-`ENTORNO=desarrollo`), de modo que el flujo se puede probar completo sin
-servidor de correo.
+Mientras falte alguno de `SMTP_HOST`, `SMTP_USUARIO` o `SMTP_PASSWORD`, la API
+**no envía nada**: escribe el enlace de recuperación en el log del servidor y
+lo devuelve en la respuesta (solo con `ENTORNO=desarrollo`), de modo que el
+flujo se puede probar completo sin servidor de correo.
 
-Para activarlo con Gmail hace falta una **contraseña de aplicación** (Cuenta de
-Google → Seguridad → Verificación en dos pasos → Contraseñas de aplicación).
-La contraseña normal de la cuenta no sirve.
+Para activarlo con Gmail hacen falta dos cosas en `backend-fastapi/.env`:
+
+```
+SMTP_USUARIO=tucuenta@gmail.com
+SMTP_PASSWORD=lacontrasenadeaplicacion
+```
+
+El resto (`SMTP_HOST=smtp.gmail.com`, `SMTP_PUERTO=587`, `SMTP_TLS=true`) ya
+viene puesto en el `.env.example`, y `SMTP_REMITENTE` se deja **vacío** a
+propósito: Gmail exige que el remitente sea la misma cuenta con la que se
+inicia sesión, así que se usa la de `SMTP_USUARIO`. Solo tiene sentido
+rellenarlo si tienes un dominio propio.
+
+La contraseña **no es la de la cuenta**: hay que crear una *contraseña de
+aplicación* (Cuenta de Google → Seguridad → Verificación en dos pasos →
+Contraseñas de aplicación). Son 16 letras y se pegan seguidas, sin los
+espacios con los que Google las muestra.
+
+Para comprobarlo sin pasar por toda la pantalla de recuperación:
+
+```
+.venv/Scripts/python.exe scripts/probar_correo.py
+```
+
+```
+.venv/Scripts/python.exe scripts/probar_correo.py tucuenta@gmail.com
+```
+
+El primero se conecta e inicia sesión sin enviar nada; el segundo manda además
+un mensaje de prueba. El script enseña la configuración (la contraseña nunca:
+solo cuántos caracteres tiene), avisa de los errores típicos antes de
+conectarse y traduce el fallo de SMTP a algo que se pueda arreglar.
 
 ---
 

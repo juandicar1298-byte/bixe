@@ -183,11 +183,18 @@ def mensaje_de_prueba(destinatario: str) -> EmailMessage:
     return mensaje
 
 
-def main() -> int:
+def main(destinatario: str | None = None) -> int:
+    """Comprueba la configuración. Si hay destinatario, envía una prueba real.
+
+    El destinatario llega por parámetro cuando lo llama
+    scripts/configurar_correo.py, y por la línea de órdenes si se ejecuta a
+    mano.
+    """
     if not revisar_configuracion():
         return 1
 
-    destinatario = sys.argv[1] if len(sys.argv) > 1 else None
+    if destinatario is None and len(sys.argv) > 1:
+        destinatario = sys.argv[1]
 
     rotulo("Conectando")
     print(f"  {configuracion.smtp_host}:{configuracion.smtp_puerto}…")

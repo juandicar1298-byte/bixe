@@ -107,25 +107,30 @@ Mientras falte alguno de `SMTP_HOST`, `SMTP_USUARIO` o `SMTP_PASSWORD`, la API
 lo devuelve en la respuesta (solo con `ENTORNO=desarrollo`), de modo que el
 flujo se puede probar completo sin servidor de correo.
 
-Para activarlo con Gmail hacen falta dos cosas en `backend-fastapi/.env`:
+Para activarlo con Gmail hace falta una *contraseña de aplicación*, que **no
+es la contraseña de la cuenta**: se crea en Cuenta de Google → Seguridad →
+Verificación en dos pasos → Contraseñas de aplicación, y son 16 letras.
+
+Con eso a mano, un solo comando lo deja todo listo:
 
 ```
-SMTP_USUARIO=tucuenta@gmail.com
-SMTP_PASSWORD=lacontrasenadeaplicacion
+.venv/Scripts/python.exe scripts/configurar_correo.py
 ```
 
-El resto (`SMTP_HOST=smtp.gmail.com`, `SMTP_PUERTO=587`, `SMTP_TLS=true`) ya
-viene puesto en el `.env.example`, y `SMTP_REMITENTE` se deja **vacío** a
-propósito: Gmail exige que el remitente sea la misma cuenta con la que se
-inicia sesión, así que se usa la de `SMTP_USUARIO`. Solo tiene sentido
-rellenarlo si tienes un dominio propio.
+Pide la contraseña sin mostrarla en pantalla, le quita los espacios con los
+que Google la enseña, la escribe en el `.env` sin tocar nada más y a
+continuación se conecta a Gmail y manda un correo de prueba a la propia
+cuenta. Hay que ejecutarlo en una terminal de verdad, porque tiene que
+preguntar.
 
-La contraseña **no es la de la cuenta**: hay que crear una *contraseña de
-aplicación* (Cuenta de Google → Seguridad → Verificación en dos pasos →
-Contraseñas de aplicación). Son 16 letras y se pegan seguidas, sin los
-espacios con los que Google las muestra.
+Lo único que hay que rellenar a mano es `SMTP_USUARIO` con la cuenta desde la
+que saldrán los correos. El resto (`SMTP_HOST=smtp.gmail.com`,
+`SMTP_PUERTO=587`, `SMTP_TLS=true`) ya viene en el `.env.example`, y
+`SMTP_REMITENTE` se deja **vacío** a propósito: Gmail exige que el remitente
+sea la misma cuenta con la que se inicia sesión. Solo tiene sentido rellenarlo
+si tienes un dominio propio.
 
-Para comprobarlo sin pasar por toda la pantalla de recuperación:
+Para comprobar una configuración que ya está puesta, sin volver a escribirla:
 
 ```
 .venv/Scripts/python.exe scripts/probar_correo.py
@@ -136,9 +141,9 @@ Para comprobarlo sin pasar por toda la pantalla de recuperación:
 ```
 
 El primero se conecta e inicia sesión sin enviar nada; el segundo manda además
-un mensaje de prueba. El script enseña la configuración (la contraseña nunca:
-solo cuántos caracteres tiene), avisa de los errores típicos antes de
-conectarse y traduce el fallo de SMTP a algo que se pueda arreglar.
+un mensaje de prueba. Enseña la configuración (la contraseña nunca: solo
+cuántos caracteres tiene), avisa de los errores típicos antes de conectarse y
+traduce el fallo de SMTP a algo que se pueda arreglar.
 
 ---
 

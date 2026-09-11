@@ -22,3 +22,6 @@ backend-fastapi/uploads/
 # Sistema
 Thumbs.db
 .DS_Store
+
+# Cachés de Python de los guiones de evidencias
+evidencias/__pycache__/

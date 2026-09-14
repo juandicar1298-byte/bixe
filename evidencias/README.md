@@ -5,8 +5,20 @@ regenera, así que si el proyecto cambia no hay que rehacer nada a mano.
 
 ## Cómo se regeneran
 
-Hacen falta **MySQL**, la **API** en el puerto 8000 y la **web** en el 5173,
-las tres en marcha. Después, desde la raíz del proyecto:
+La primera vez, instala lo que usan los guiones (van en el mismo entorno
+virtual del backend, pero aparte de sus dependencias porque la aplicación no
+los necesita):
+
+```
+backend-fastapi/.venv/Scripts/python.exe -m pip install -r evidencias/requirements.txt
+```
+
+```
+backend-fastapi/.venv/Scripts/python.exe -m playwright install chromium
+```
+
+Después hacen falta **MySQL**, la **API** en el puerto 8000 y la **web** en el
+5173, las tres en marcha. Y desde la raíz del proyecto:
 
 ```
 backend-fastapi/.venv/Scripts/python.exe evidencias/generar.py

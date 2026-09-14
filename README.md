@@ -31,19 +31,25 @@ Hacen falta **MySQL/MariaDB**, **Node.js 18+** y **Python 3.12+**.
 ### 1. Base de datos
 
 Enciende MySQL (en XAMPP, el botón **Start** de MySQL). Después crea la base
-`bixe_db`, carga el esquema y aplica las tres migraciones **en este orden**:
+`bixe_db`, carga el esquema y aplica las tres migraciones **en este orden**,
+desde PowerShell en la carpeta del proyecto:
 
 ```
-mysql -u root -p bixe_db < backend/sql/servicios_pedidos.sql
-```
-
-```
-mysql -u root -p bixe_db < backend-fastapi/sql/pagos_facturas_imagenes.sql
+cmd /c "C:\xampp\mysql\bin\mysql.exe -u root bixe_db < backend\sql\servicios_pedidos.sql"
 ```
 
 ```
-mysql -u root -p bixe_db < backend-fastapi/sql/codigo_recuperacion.sql
+cmd /c "C:\xampp\mysql\bin\mysql.exe -u root bixe_db < backend-fastapi\sql\pagos_facturas_imagenes.sql"
 ```
+
+```
+cmd /c "C:\xampp\mysql\bin\mysql.exe -u root bixe_db < backend-fastapi\sql\codigo_recuperacion.sql"
+```
+
+Van envueltas en `cmd /c` por dos motivos: **PowerShell no admite `<`** para
+pasarle un archivo a un programa, y `mysql` no está en el PATH de Windows, así
+que hay que llamarlo por su ruta de XAMPP. Si tu usuario `root` tiene
+contraseña, añade `-p` después de `-u root` y te la pedirá.
 
 La primera crea servicios y pedidos; la segunda, las galerías de fotos, los
 pagos y las facturas; la tercera, el código de verificación para recuperar la

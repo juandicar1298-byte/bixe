@@ -1,0 +1,9 @@
+# Solo para regenerar las evidencias de la lista de chequeo. No las necesita
+# la aplicacion, por eso no estan en backend-fastapi/requirements.txt.
+#
+# Se instalan dentro del mismo entorno virtual del backend:
+#   backend-fastapi/.venv/Scripts/python.exe -m pip install -r evidencias/requirements.txt
+#   backend-fastapi/.venv/Scripts/python.exe -m playwright install chromium
+openpyxl==3.1.5
+playwright==1.62.0
+pillow==12.3.0

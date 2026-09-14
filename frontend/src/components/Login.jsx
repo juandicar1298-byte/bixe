@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Input } from './Input';
 import { Button } from './Button';
 import { Toast } from './Toast';
-import { iniciarSesion, CLAVE_TOKEN, CLAVE_USUARIO } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import { iniciarSesion } from '../services/api';
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const Login = ({ onIrARecuperar, onIrARegistro, onLoginExitoso }) => {
+  const { guardarSesion } = useAuth();
   const [datos, setDatos] = useState({ email: '', contrasena: '' });
   const [errores, setErrores] = useState({});
   const [recordarme, setRecordarme] = useState(false);
@@ -49,9 +51,9 @@ export const Login = ({ onIrARecuperar, onIrARegistro, onLoginExitoso }) => {
     try {
       const respuesta = await iniciarSesion(datos.email, datos.contrasena);
 
-      // El token y el usuario quedan guardados para toda la aplicación.
-      localStorage.setItem(CLAVE_TOKEN, respuesta.acceso);
-      localStorage.setItem(CLAVE_USUARIO, JSON.stringify(respuesta.usuario));
+      // Se guarda en la sesión compartida, no directamente en localStorage:
+      // así el carrito y la cabecera se enteran en el mismo instante.
+      guardarSesion(respuesta.acceso, respuesta.usuario);
 
       setToastMensaje(`¡Hola, ${respuesta.usuario.nombre}!`);
       setToastTipo('exito');

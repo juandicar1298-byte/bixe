@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { CarritoProvider } from './context/CarritoContext';
+import { SesionProvider } from './context/SesionContext';
 import { CarritoDrawer } from './components/CarritoDrawer';
 import { RutaProtegida } from './components/RutaProtegida';
 import { WhatsAppButton } from './components/WhatsAppButton';
@@ -19,60 +20,62 @@ import { EmpleadoPanel } from './pages/EmpleadoPanel';
 
 function App() {
   return (
-    <CarritoProvider>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/quienes-somos" element={<QuienesSomos />} />
-        <Route path="/contacto" element={<Contacto />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/modelos" element={<Modelos />} />
-        <Route path="/modelos/:id" element={<ModeloDetalle />} />
-        <Route path="/servicios" element={<Servicios />} />
-        <Route path="/restablecer" element={<RestablecerPassword />} />
+    <SesionProvider>
+      <CarritoProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/quienes-somos" element={<QuienesSomos />} />
+          <Route path="/contacto" element={<Contacto />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/modelos" element={<Modelos />} />
+          <Route path="/modelos/:id" element={<ModeloDetalle />} />
+          <Route path="/servicios" element={<Servicios />} />
+          <Route path="/restablecer" element={<RestablecerPassword />} />
 
-        <Route
-          path="/pago/:pedidoId"
-          element={
-            <RutaProtegida>
-              <PaginaPago />
-            </RutaProtegida>
-          }
-        />
+          <Route
+            path="/pago/:pedidoId"
+            element={
+              <RutaProtegida>
+                <PaginaPago />
+              </RutaProtegida>
+            }
+          />
 
-        <Route
-          path="/admin"
-          element={
-            <RutaProtegida rolesPermitidos={[1]}>
-              <AdminPanel />
-            </RutaProtegida>
-          }
-        />
-        <Route
-          path="/empleado"
-          element={
-            <RutaProtegida rolesPermitidos={[2]}>
-              <EmpleadoPanel />
-            </RutaProtegida>
-          }
-        />
-        <Route
-          path="/cliente"
-          element={
-            <RutaProtegida rolesPermitidos={[3]}>
-              <ClientePanel />
-            </RutaProtegida>
-          }
-        />
-      </Routes>
+          <Route
+            path="/admin"
+            element={
+              <RutaProtegida rolesPermitidos={[1]}>
+                <AdminPanel />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/empleado"
+            element={
+              <RutaProtegida rolesPermitidos={[2]}>
+                <EmpleadoPanel />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/cliente"
+            element={
+              <RutaProtegida rolesPermitidos={[3]}>
+                <ClientePanel />
+              </RutaProtegida>
+            }
+          />
+        </Routes>
 
-      {/* Viven fuera de <Routes> para que sigan disponibles en todas las páginas */}
-      <CortinaCarga />
-      <CarritoDrawer />
-      <WhatsAppButton
-        numero="573024170803"
-        mensaje="Hola, quiero más información sobre el catálogo BIXE."
-      />
-    </CarritoProvider>
+        {/* Viven fuera de <Routes> para que sigan disponibles en todas las páginas */}
+        <CortinaCarga />
+        <CarritoDrawer />
+        <WhatsAppButton
+          numero="573024170803"
+          mensaje="Hola, quiero más información sobre el catálogo BIXE."
+        />
+      </CarritoProvider>
+    </SesionProvider>
   );
 }
 

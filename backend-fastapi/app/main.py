@@ -24,9 +24,11 @@ from app.middlewares import cabeceras_de_seguridad, registrar_peticion
 from app.models import bixe  # noqa: F401 — registra los modelos en Base
 from app.routers import (
     auth,
+    chat,
     estadisticas,
     pagos,
     pedidos,
+    pqr,
     productos,
     servicios,
     uploads,
@@ -49,6 +51,8 @@ TAGS = [
     {"name": "Pagos", "description": "Cobro del pedido y factura en PDF."},
     {"name": "Ventas", "description": "Historial de ventas y reporte diario en PDF y Excel."},
     {"name": "Archivos", "description": "Subida de las imágenes del catálogo."},
+    {"name": "PQR", "description": "Peticiones, quejas y reclamos de los clientes."},
+    {"name": "Chatbot", "description": "Asistente del sitio, con Inteligencia Artificial."},
     {"name": "Estadísticas", "description": "Cifras que alimentan los paneles."},
     {"name": "Sistema", "description": "Estado del servicio."},
 ]
@@ -133,6 +137,8 @@ app.include_router(pedidos.router)
 app.include_router(pagos.router)
 app.include_router(uploads.router)
 app.include_router(ventas.router)
+app.include_router(pqr.router)
+app.include_router(chat.router)
 app.include_router(estadisticas.router)
 
 

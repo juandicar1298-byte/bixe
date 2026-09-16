@@ -82,6 +82,27 @@ async def usuario_actual(
 UsuarioActual = Annotated[Usuario, Depends(usuario_actual)]
 
 
+async def usuario_opcional(
+    sesion: SesionDep,
+    token: Annotated[str | None, Depends(esquema_oauth2)],
+) -> Usuario | None:
+    """El usuario si hay sesión válida, y None si no la hay.
+
+    Para lo que funciona con y sin cuenta: radicar una PQR o hablar con el
+    chatbot. Un token caducado o roto se trata como si no hubiera ninguno; no
+    tiene sentido cerrarle la puerta a un visitante por eso.
+    """
+    if not token:
+        return None
+    try:
+        return await usuario_actual(sesion, token)
+    except NoAutenticado:
+        return None
+
+
+UsuarioOpcional = Annotated[Usuario | None, Depends(usuario_opcional)]
+
+
 class ExigirPermiso:
     """Autorización basada en la tabla «permisos», no en ids de rol quemados.
 

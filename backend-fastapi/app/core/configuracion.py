@@ -52,6 +52,16 @@ class Configuracion(BaseSettings):
     smtp_remitente: str = ""
     smtp_tls: bool = True
 
+    # Chatbot con Inteligencia Artificial. Sin clave, el asistente sigue
+    # funcionando con respuestas preparadas a partir del catálogo.
+    proveedor_ia: str = ""  # anthropic | openai | vacío
+    ia_api_key: str = ""
+    ia_modelo: str = ""
+
+    @property
+    def ia_configurada(self) -> bool:
+        return bool(self.proveedor_ia and self.ia_api_key)
+
     @property
     def correo_configurado(self) -> bool:
         return bool(self.smtp_host and self.smtp_usuario and self.smtp_password)

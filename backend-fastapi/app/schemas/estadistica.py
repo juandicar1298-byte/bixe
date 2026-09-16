@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -58,3 +58,85 @@ class Estadisticas(BaseModel):
     ventas_por_mes: list[VentaMensual]
     mas_vendidos: list[ArticuloVendido]
     pedidos_recientes: list[PedidoReciente]
+
+
+# ============================ Quinto avance ============================
+# Los dashboards de ventas y de PQR. Todo sale de la tabla de ventas: un
+# pedido pendiente o cancelado no es dinero que haya entrado.
+
+
+class ResumenVentas(BaseModel):
+    ventas: int = 0
+    ingresos: float = 0
+    impuesto: float = 0
+    descuento: float = 0
+    clientes: int = 0
+    ticket_promedio: float = 0
+
+
+class PuntoSerie(BaseModel):
+    periodo: str = Field(description="AAAA-MM-DD si se agrupa por día, AAAA-MM por mes.")
+    ventas: int = 0
+    ingresos: float = 0
+
+
+class VentasPorCanal(BaseModel):
+    canal: str
+    ventas: int
+    ingresos: float
+
+
+class VentaReciente(BaseModel):
+    id: int
+    numero: str
+    cliente: str
+    total: float
+    estado: str
+    canal: str
+    fecha: datetime
+
+
+class ResumenFacturacion(BaseModel):
+    total: int = 0
+    facturado: float = 0
+
+
+class ConteoPorEstadoSimple(BaseModel):
+    estado: str
+    total: int
+
+
+class ResumenPqr(BaseModel):
+    total: int = 0
+    pendientes: int = 0
+    por_estado: list[ConteoPorEstadoSimple] = []
+
+
+class PanelDeVentas(BaseModel):
+    """Lo que pinta el dashboard de ventas, en una sola petición."""
+
+    desde: date
+    hasta: date
+    agrupar: str
+    resumen: ResumenVentas
+    serie: list[PuntoSerie]
+    top_articulos: list[ArticuloVendido]
+    por_canal: list[VentasPorCanal]
+    ultimas: list[VentaReciente]
+    facturacion: ResumenFacturacion
+    pqr: ResumenPqr
+
+
+class ResumenPqrCliente(BaseModel):
+    total: int = 0
+    pendientes: int = 0
+
+
+class PanelDelCliente(BaseModel):
+    """El dashboard del cliente: solo sus propias cifras."""
+
+    compras: ResumenVentas
+    serie: list[PuntoSerie]
+    top_articulos: list[ArticuloVendido]
+    ultimas: list[VentaReciente]
+    pqr: ResumenPqrCliente

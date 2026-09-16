@@ -286,3 +286,150 @@ class ServicioImagen(Base):
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
+
+
+# ============================ Quinto avance ============================
+# El pedido es el carrito que confirma el cliente; la venta es la operación
+# comercial que queda registrada cuando ese pedido se paga, o cuando un
+# empleado la registra a mano desde el mostrador. Son cosas distintas: un
+# pedido puede quedarse pendiente o cancelarse y nunca llegar a ser venta.
+
+
+class DetalleVenta(Base):
+    """Una línea de la venta.
+
+    El nombre y el precio se copian aquí a propósito: si mañana cambia el
+    catálogo, la venta de ayer tiene que seguir diciendo qué se vendió y a
+    qué precio.
+    """
+
+    __tablename__ = "detalle_ventas"
+
+    id: Mapped[int] = mapped_column("id_detalle", primary_key=True)
+    venta_id: Mapped[int] = mapped_column(
+        "id_venta", ForeignKey("ventas.id_venta", ondelete="CASCADE"), index=True
+    )
+    tipo: Mapped[str] = mapped_column(String(10))  # producto | servicio
+    referencia_id: Mapped[int] = mapped_column("id_referencia", Integer)
+    nombre: Mapped[str] = mapped_column(String(120))
+    cantidad: Mapped[int] = mapped_column(Integer, default=1)
+    precio_unitario: Mapped[float] = mapped_column(Numeric(12, 2))
+    descuento: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    subtotal: Mapped[float] = mapped_column(Numeric(12, 2))
+
+
+class Venta(Base):
+    __tablename__ = "ventas"
+
+    id: Mapped[int] = mapped_column("id_venta", primary_key=True)
+    numero: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    consecutivo: Mapped[int] = mapped_column(Integer, unique=True)
+
+    # Vacío en las ventas de mostrador, que no nacen de un pedido de la web.
+    pedido_id: Mapped[int | None] = mapped_column(
+        "id_pedido", ForeignKey("pedidos.id_pedido", ondelete="SET NULL"), unique=True
+    )
+    cliente_id: Mapped[int] = mapped_column(
+        "id_cliente", ForeignKey("usuarios.id_usuario"), index=True
+    )
+    # Quién registró la venta. Vacío en las de la web: las hace el propio
+    # cliente sin que intervenga nadie del taller.
+    vendedor_id: Mapped[int | None] = mapped_column(
+        "id_vendedor", ForeignKey("usuarios.id_usuario", ondelete="SET NULL")
+    )
+
+    canal: Mapped[str] = mapped_column(String(12), default="web")  # web | mostrador
+    subtotal: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    descuento: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    impuesto: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    total: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    estado: Mapped[str] = mapped_column(String(12), default="completada", index=True)
+    notas: Mapped[str | None] = mapped_column(String(255))
+    fecha: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    cliente: Mapped[Usuario] = relationship(lazy="joined", foreign_keys=[cliente_id])
+    vendedor: Mapped[Usuario | None] = relationship(
+        lazy="joined", foreign_keys=[vendedor_id]
+    )
+    detalle: Mapped[list[DetalleVenta]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan"
+    )
+
+
+class Pqr(Base):
+    """Petición, queja, reclamo o sugerencia.
+
+    El nombre y el correo se guardan aparte del usuario porque también puede
+    radicar alguien que no tenga cuenta.
+    """
+
+    __tablename__ = "pqr"
+
+    id: Mapped[int] = mapped_column("id_pqr", primary_key=True)
+    radicado: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    consecutivo: Mapped[int] = mapped_column(Integer, unique=True)
+    usuario_id: Mapped[int | None] = mapped_column(
+        "id_usuario", ForeignKey("usuarios.id_usuario", ondelete="SET NULL")
+    )
+    nombre_contacto: Mapped[str] = mapped_column(String(80))
+    email_contacto: Mapped[str] = mapped_column(String(100))
+    tipo: Mapped[str] = mapped_column(String(12))  # peticion | queja | reclamo | sugerencia
+    asunto: Mapped[str] = mapped_column(String(120))
+    mensaje: Mapped[str] = mapped_column(Text)
+    # pendiente | en_proceso | respondida | cerrada
+    estado: Mapped[str] = mapped_column(String(12), default="pendiente", index=True)
+    respuesta: Mapped[str | None] = mapped_column(Text)
+    atendido_por_id: Mapped[int | None] = mapped_column(
+        "id_atendido_por", ForeignKey("usuarios.id_usuario", ondelete="SET NULL")
+    )
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    fecha_respuesta: Mapped[datetime | None] = mapped_column(DateTime)
+
+    usuario: Mapped[Usuario | None] = relationship(
+        lazy="joined", foreign_keys=[usuario_id]
+    )
+    atendido_por: Mapped[Usuario | None] = relationship(
+        lazy="joined", foreign_keys=[atendido_por_id]
+    )
+
+
+class Mensaje(Base):
+    """Un turno de la conversación con el chatbot."""
+
+    __tablename__ = "mensajes"
+
+    id: Mapped[int] = mapped_column("id_mensaje", primary_key=True)
+    conversacion_id: Mapped[int] = mapped_column(
+        "id_conversacion",
+        ForeignKey("conversaciones.id_conversacion", ondelete="CASCADE"),
+        index=True,
+    )
+    rol: Mapped[str] = mapped_column(String(10))  # usuario | asistente
+    contenido: Mapped[str] = mapped_column(Text)
+    fecha: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class Conversacion(Base):
+    """Hilo de chat con el asistente.
+
+    La clave identifica la conversación de un visitante sin cuenta: el
+    navegador la guarda y la reenvía para no perder el hilo entre páginas.
+    """
+
+    __tablename__ = "conversaciones"
+
+    id: Mapped[int] = mapped_column("id_conversacion", primary_key=True)
+    clave: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    usuario_id: Mapped[int | None] = mapped_column(
+        "id_usuario", ForeignKey("usuarios.id_usuario", ondelete="SET NULL"), index=True
+    )
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    fecha_ultimo: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    mensajes: Mapped[list[Mensaje]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan", order_by="Mensaje.id"
+    )

@@ -10,6 +10,7 @@ from app.errores import (
     PermisoDenegado,
     RecursoNoEncontrado,
 )
+from app.crud import ventas as crud_ventas
 from app.models.bixe import Factura, Pago, Pedido
 from app.services import pasarela
 from app.services.factura import calcular_impuesto
@@ -92,6 +93,10 @@ async def cobrar(
             total=monto,
         )
         sesion.add(factura)
+
+        # La venta entra en el mismo commit que el pago y la factura: si algo
+        # falla, no queda un cobro registrado sin su venta correspondiente.
+        await crud_ventas.registrar_desde_pedido(sesion, pedido)
 
         pedido.estado_pago = "pagado"
         # Un pedido pagado deja de estar «pendiente» para el taller.

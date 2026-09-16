@@ -31,6 +31,7 @@ from app.routers import (
     servicios,
     uploads,
     usuarios,
+    ventas,
 )
 
 logging.basicConfig(
@@ -46,6 +47,7 @@ TAGS = [
     {"name": "Servicios", "description": "Servicios del taller que el cliente puede pedir."},
     {"name": "Pedidos", "description": "Confirmación del carrito y seguimiento de los pedidos."},
     {"name": "Pagos", "description": "Cobro del pedido y factura en PDF."},
+    {"name": "Ventas", "description": "Historial de ventas y reporte diario en PDF y Excel."},
     {"name": "Archivos", "description": "Subida de las imágenes del catálogo."},
     {"name": "Estadísticas", "description": "Cifras que alimentan los paneles."},
     {"name": "Sistema", "description": "Estado del servicio."},
@@ -130,6 +132,7 @@ app.include_router(servicios.router)
 app.include_router(pedidos.router)
 app.include_router(pagos.router)
 app.include_router(uploads.router)
+app.include_router(ventas.router)
 app.include_router(estadisticas.router)
 
 

@@ -74,7 +74,14 @@ def cuentas_temporales():
 
     from app.core.configuracion import configuracion
     from app.core.seguridad import hashear_contrasena
-    from app.models.bixe import RecuperacionContrasena, Usuario
+    from app.models.bixe import (
+        Conversacion,
+        Pedido,
+        Pqr,
+        RecuperacionContrasena,
+        Usuario,
+        Venta,
+    )
 
     async def con_sesion(trabajo):
         """Ejecuta *trabajo* con un motor recién creado y lo cierra al acabar.
@@ -118,12 +125,18 @@ def cuentas_temporales():
             )
         )
         for usuario in usuarios:
-            # Las recuperaciones apuntan al usuario; se van primero.
-            await sesion.execute(
-                delete(RecuperacionContrasena).where(
-                    RecuperacionContrasena.usuario_id == usuario.id
-                )
-            )
+            # Todo lo que apunta al usuario se va primero: la base tiene claves
+            # foráneas que, con razón, no dejan borrar a alguien que tenga
+            # ventas o pedidos a su nombre.
+            for modelo, columna in (
+                (RecuperacionContrasena, RecuperacionContrasena.usuario_id),
+                (Venta, Venta.cliente_id),
+                (Pedido, Pedido.usuario_id),
+                (Pqr, Pqr.usuario_id),
+                (Conversacion, Conversacion.usuario_id),
+            ):
+                await sesion.execute(delete(modelo).where(columna == usuario.id))
+
             await sesion.delete(usuario)
         await sesion.commit()
         return len(usuarios)

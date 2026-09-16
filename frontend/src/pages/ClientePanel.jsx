@@ -2,8 +2,16 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/dashboard/DashboardLayout';
 import { PanelSeccion } from '../components/dashboard/PanelSeccion';
 import { MisPedidos } from '../components/MisPedidos';
+import { MisPqr } from '../components/MisPqr';
+import { PanelCliente } from '../components/dashboard/PanelCliente';
 import { Toast } from '../components/Toast';
-import { IconoPedidos, IconoPerfil, IconoEscudo } from '../components/ui/Iconos';
+import {
+  IconoPedidos,
+  IconoPerfil,
+  IconoEscudo,
+  IconoGrafico,
+  IconoPqr,
+} from '../components/ui/Iconos';
 import { useAuth } from '../hooks/useAuth';
 import {
   obtenerMiPerfilApi,
@@ -12,12 +20,16 @@ import {
 } from '../services/api';
 
 const SECCIONES = [
+  { id: 'resumen', etiqueta: 'Mi resumen', icono: IconoGrafico },
   { id: 'pedidos', etiqueta: 'Mis pedidos', icono: IconoPedidos },
+  { id: 'pqr', etiqueta: 'Mis PQR', icono: IconoPqr },
   { id: 'perfil', etiqueta: 'Mis datos', icono: IconoPerfil },
   { id: 'seguridad', etiqueta: 'Seguridad', icono: IconoEscudo },
 ];
 
 const DESCRIPCIONES = {
+  resumen: 'Cuánto has comprado en BIXE y en qué.',
+  pqr: 'Las solicitudes que has radicado y lo que te respondió el taller.',
   pedidos: 'El historial de todo lo que has pedido en BIXE.',
   perfil: 'Tus datos de contacto para que el taller pueda ubicarte.',
   seguridad: 'Cambia la contraseña con la que entras a tu cuenta.',
@@ -39,7 +51,7 @@ const Dato = ({ etiqueta, valor }) => (
 export const ClientePanel = () => {
   const { actualizarUsuarioLocal } = useAuth();
 
-  const [seccion, setSeccion] = useState('pedidos');
+  const [seccion, setSeccion] = useState('resumen');
 
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -144,7 +156,9 @@ export const ClientePanel = () => {
       titulo={seccionActual?.etiqueta ?? 'Mi cuenta'}
       descripcion={DESCRIPCIONES[seccion]}
     >
+      {seccion === 'resumen' && <PanelCliente />}
       {seccion === 'pedidos' && <MisPedidos />}
+      {seccion === 'pqr' && <MisPqr />}
 
       {seccion === 'perfil' && (
         <>

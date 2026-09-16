@@ -10,6 +10,7 @@ const ENLACES = [
   { a: '/servicios', texto: 'Servicios' },
   { a: '/quienes-somos', texto: 'Quiénes somos' },
   { a: '/contacto', texto: 'Contacto' },
+  { a: '/pqr', texto: 'PQR' },
 ];
 
 const NOMBRE_ROL = { 1: 'Administrador', 2: 'Empleado', 3: 'Cliente' };

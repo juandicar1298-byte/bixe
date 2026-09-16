@@ -5,9 +5,11 @@ import { CarritoDrawer } from './components/CarritoDrawer';
 import { RutaProtegida } from './components/RutaProtegida';
 import { WhatsAppButton } from './components/WhatsAppButton';
 import { CortinaCarga } from './components/ui/CortinaCarga';
+import { ChatBot } from './components/ChatBot';
 import { Index } from './pages/Index';
 import { QuienesSomos } from './pages/QuienesSomos';
 import { Contacto } from './pages/Contacto';
+import { Pqr } from './pages/Pqr';
 import { LoginPage } from './pages/LoginPage';
 import { Modelos } from './pages/Modelos';
 import { ModeloDetalle } from './pages/ModeloDetalle';
@@ -26,6 +28,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/quienes-somos" element={<QuienesSomos />} />
           <Route path="/contacto" element={<Contacto />} />
+          <Route path="/pqr" element={<Pqr />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/modelos" element={<Modelos />} />
           <Route path="/modelos/:id" element={<ModeloDetalle />} />
@@ -70,6 +73,7 @@ function App() {
         {/* Viven fuera de <Routes> para que sigan disponibles en todas las páginas */}
         <CortinaCarga />
         <CarritoDrawer />
+        <ChatBot />
         <WhatsAppButton
           numero="573024170803"
           mensaje="Hola, quiero más información sobre el catálogo BIXE."

@@ -1,4 +1,17 @@
-export const Select = ({ label, name, value, onChange, options, error }) => (
+/**
+ * `placeholder` es el texto de la opción vacía. En un formulario tiene sentido
+ * pedir que se elija algo; en un filtro, no: ahí la opción vacía ya significa
+ * «todos» y va escrita en la lista. Con null no se pinta ninguna.
+ */
+export const Select = ({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+  error,
+  placeholder = 'Selecciona una opción',
+}) => (
   <div className="w-full">
     {label && <label className="etiqueta">{label}</label>}
 
@@ -9,7 +22,7 @@ export const Select = ({ label, name, value, onChange, options, error }) => (
         onChange={onChange}
         className={`campo appearance-none pr-10 ${error ? '!border-peligro' : ''}`}
       >
-        <option value="">Selecciona una opción</option>
+        {placeholder !== null && <option value="">{placeholder}</option>}
         {options.map((op) => (
           <option key={op.value} value={op.value}>
             {op.label}

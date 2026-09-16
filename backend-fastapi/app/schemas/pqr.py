@@ -86,8 +86,21 @@ class PqrDetalle(PqrResumen):
 
 
 class PaginaDePqr(BaseModel):
+    """La bandeja del personal: lo justo para pintar la tabla."""
+
     total: int
     pqr: list[PqrResumen]
+
+
+class PaginaDeMisPqr(BaseModel):
+    """Las del propio cliente, con el mensaje y la respuesta.
+
+    Va con el detalle completo porque quien radicó quiere leer justamente
+    eso: qué contestó el taller, sin tener que abrir cada una.
+    """
+
+    total: int
+    pqr: list[PqrDetalle]
 
 
 class ConteoPqr(BaseModel):

@@ -139,3 +139,53 @@ export const IconoReloj = (props) => (
     <path d="M12 7v5l3 2" />
   </Base>
 );
+
+// ---------------------------- Quinto avance ----------------------------
+
+export const IconoVentas = (props) => (
+  <Base {...props}>
+    <path d="M3 17l5-6 4 3 5-7" />
+    <path d="M17 7h4v4" />
+    <path d="M3 21h18" />
+  </Base>
+);
+
+export const IconoGrafico = (props) => (
+  <Base {...props}>
+    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+  </Base>
+);
+
+export const IconoPqr = (props) => (
+  <Base {...props}>
+    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+    <path d="M12 8v4M12 16h.01" />
+  </Base>
+);
+
+export const IconoChat = (props) => (
+  <Base {...props}>
+    <path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z" />
+    <path d="M9 10h6M9 13h3" />
+  </Base>
+);
+
+export const IconoDescargar = (props) => (
+  <Base {...props}>
+    <path d="M12 3v11M8 11l4 4 4-4" />
+    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+  </Base>
+);
+
+export const IconoFactura = (props) => (
+  <Base {...props}>
+    <path d="M6 2h9l4 4v16l-3-2-3 2-3-2-3 2z" />
+    <path d="M9 8h6M9 12h6M9 16h3" />
+  </Base>
+);
+
+export const IconoEnviar = (props) => (
+  <Base {...props}>
+    <path d="M21 3L10.5 13.5M21 3l-6.5 18-4-8-8-4z" />
+  </Base>
+);

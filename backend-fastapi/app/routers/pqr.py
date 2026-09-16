@@ -14,6 +14,7 @@ from app.dependencias import (
 from app.schemas.error import RESPUESTAS_API
 from app.schemas.pqr import (
     EstadoPqr,
+    PaginaDeMisPqr,
     PaginaDePqr,
     PqrCambiarEstado,
     PqrCrear,
@@ -60,7 +61,7 @@ async def radicar(sesion: SesionDep, usuario: UsuarioOpcional, datos: PqrCrear):
 
 @router.get(
     "/mias",
-    response_model=PaginaDePqr,
+    response_model=PaginaDeMisPqr,
     summary="Mis solicitudes",
     description="Las PQR del usuario que consulta, con su estado y su respuesta.",
 )

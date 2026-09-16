@@ -246,3 +246,72 @@ export const agregarImagenApi = (recurso, id, datos) =>
 
 export const eliminarImagenApi = (recurso, id, imagenId) =>
   peticion(`/${recurso}/${id}/imagenes/${imagenId}`, { metodo: 'DELETE' });
+
+// ============================ Quinto avance ============================
+
+const consultaDe = (filtros = {}) => {
+  const parametros = new URLSearchParams();
+  Object.entries(filtros).forEach(([clave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== '') {
+      parametros.append(clave, valor);
+    }
+  });
+  const texto = parametros.toString();
+  return texto ? `?${texto}` : '';
+};
+
+// ------------------------------- Ventas -------------------------------
+
+export const obtenerVentasApi = (filtros) => peticion(`/ventas${consultaDe(filtros)}`);
+
+export const obtenerVentaApi = (id) => peticion(`/ventas/${id}`);
+
+export const registrarVentaApi = (datos) =>
+  peticion('/ventas', { metodo: 'POST', cuerpo: datos });
+
+export const anularVentaApi = (id) =>
+  peticion(`/ventas/${id}/anulacion`, { metodo: 'PATCH' });
+
+export const obtenerReporteDiarioApi = (fecha) =>
+  peticion(`/ventas/reporte-diario${consultaDe({ fecha })}`);
+
+export const descargarReportePdfApi = (fecha) =>
+  peticionArchivo(`/ventas/reporte-diario.pdf${consultaDe({ fecha })}`);
+
+export const descargarReporteExcelApi = (fecha) =>
+  peticionArchivo(`/ventas/reporte-diario.xlsx${consultaDe({ fecha })}`);
+
+// ----------------------------- Dashboards -----------------------------
+
+export const obtenerPanelVentasApi = (filtros) =>
+  peticion(`/estadisticas/ventas${consultaDe(filtros)}`);
+
+export const obtenerMiPanelApi = () => peticion('/estadisticas/mi-panel');
+
+// -------------------------------- PQR --------------------------------
+
+export const radicarPqrApi = (datos) =>
+  peticion('/pqr', { metodo: 'POST', cuerpo: datos });
+
+export const obtenerMisPqrApi = (filtros) =>
+  peticion(`/pqr/mias${consultaDe(filtros)}`);
+
+export const obtenerBandejaPqrApi = (filtros) => peticion(`/pqr${consultaDe(filtros)}`);
+
+export const obtenerPqrApi = (id) => peticion(`/pqr/${id}`);
+
+export const consultarPqrPorRadicadoApi = (radicado) =>
+  peticion(`/pqr/radicado/${encodeURIComponent(radicado)}`);
+
+export const responderPqrApi = (id, datos) =>
+  peticion(`/pqr/${id}/respuesta`, { metodo: 'PUT', cuerpo: datos });
+
+export const cambiarEstadoPqrApi = (id, estado) =>
+  peticion(`/pqr/${id}/estado`, { metodo: 'PATCH', cuerpo: { estado } });
+
+// ------------------------------ Chatbot ------------------------------
+
+export const estadoAsistenteApi = () => peticion('/chat/estado');
+
+export const enviarMensajeChatApi = (mensaje, conversacion) =>
+  peticion('/chat', { metodo: 'POST', cuerpo: { mensaje, conversacion } });

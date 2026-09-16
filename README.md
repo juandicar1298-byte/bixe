@@ -4,7 +4,8 @@ Proyecto del Tecnólogo en Análisis y Desarrollo de Software (SENA, Centro de
 Servicios y Gestión Empresarial). Ficha 3406211.
 
 Aplicación full stack: catálogo de vehículos, servicios de taller, carrito con
-pedidos y tres paneles de gestión según el rol del usuario.
+pedidos, pasarela de pago y facturación, módulo de ventas con reportes en PDF
+y Excel, dashboards por rol, PQR y un chatbot con Inteligencia Artificial.
 
 ---
 
@@ -13,14 +14,16 @@ pedidos y tres paneles de gestión según el rol del usuario.
 ```
 REACT/
 ├── frontend/           React 19 + Vite + Tailwind 4
-├── backend-fastapi/    API del CUARTO avance (Python + FastAPI)   ← la activa
-└── backend/            API del TERCER avance (Node.js + Express)  ← se conserva
+├── backend-fastapi/    API en Python + FastAPI                    ← la activa
+├── backend/            API del TERCER avance (Node.js + Express)  ← se conserva
+└── evidencias/         Guiones que generan las capturas de la lista de chequeo
 ```
 
-El tercer avance pedía un backend en Node/Express y el cuarto lo pide en
-FastAPI. Los dos están en el repositorio: `backend/` queda como evidencia del
-entregable anterior y `backend-fastapi/` es el que consume el frontend hoy.
-Para cambiar de uno a otro basta con editar `VITE_API_URL` en `frontend/.env`.
+El tercer avance pedía un backend en Node/Express y del cuarto en adelante se
+pide en FastAPI. Los dos están en el repositorio: `backend/` queda como
+evidencia del entregable anterior y `backend-fastapi/` es el que consume el
+frontend hoy. Para cambiar de uno a otro basta con editar `VITE_API_URL` en
+`frontend/.env`.
 
 ---
 
@@ -46,6 +49,10 @@ cmd /c "C:\xampp\mysql\bin\mysql.exe -u root bixe_db < backend-fastapi\sql\pagos
 cmd /c "C:\xampp\mysql\bin\mysql.exe -u root bixe_db < backend-fastapi\sql\codigo_recuperacion.sql"
 ```
 
+```
+cmd /c "C:\xampp\mysql\bin\mysql.exe -u root bixe_db < backend-fastapi\sql\quinto_avance.sql"
+```
+
 Van envueltas en `cmd /c` por dos motivos: **PowerShell no admite `<`** para
 pasarle un archivo a un programa, y `mysql` no está en el PATH de Windows, así
 que hay que llamarlo por su ruta de XAMPP. Si tu usuario `root` tiene
@@ -53,8 +60,10 @@ contraseña, añade `-p` después de `-u root` y te la pedirá.
 
 La primera crea servicios y pedidos; la segunda, las galerías de fotos, los
 pagos y las facturas; la tercera, el código de verificación para recuperar la
-contraseña. Las tres son idempotentes: se pueden ejecutar varias veces sin
-duplicar nada.
+contraseña; la cuarta, las ventas, las PQR y las conversaciones del chatbot.
+Las cuatro son idempotentes: se pueden ejecutar varias veces sin duplicar
+nada. La última, además, da de alta las ventas de los pedidos que ya
+estuvieran pagados, para que los informes no arranquen vacíos.
 
 ### 2. Arrancar el proyecto
 
@@ -109,6 +118,9 @@ los nombres de las variables y sin valores reales; el `.env` está en
 | `SECRET_KEY` | backend-fastapi | Firma de los JWT. Generar con `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `ORIGENES_PERMITIDOS` | backend-fastapi | Lista explícita de orígenes para CORS |
 | `SMTP_*` | backend-fastapi | Correo de recuperación de contraseña |
+| `PROVEEDOR_IA` | backend-fastapi | `anthropic`, `openai` o vacío |
+| `IA_API_KEY` | backend-fastapi | Clave del servicio de IA del chatbot |
+| `IA_MODELO` | backend-fastapi | Modelo a usar; vacío para el que trae por defecto |
 | `VITE_API_URL` | frontend | A qué backend apunta la web |
 
 ### Correo de recuperación
@@ -337,12 +349,186 @@ Quien tenga activado «reducir movimiento» en su sistema operativo no ve ningun
 de las dos: la cortina ni siquiera se monta y el resto de animaciones quedan en
 nada.
 
+## Ventas y reportes
+
+Un **pedido** es el carrito que confirma el cliente; una **venta** es la
+operación comercial que queda registrada cuando ese pedido se paga, o cuando
+alguien del taller la registra a mano desde el mostrador. Son cosas distintas:
+un pedido puede quedarse pendiente o cancelarse y no llegar nunca a ser venta,
+y por eso las ventas viven en su propia tabla y no se derivan de los pedidos.
+
+La venta de la web se crea sola, en el mismo commit que el pago y la factura.
+La de mostrador se registra desde **Panel → Ventas → Nueva venta**, y admite
+descuento por línea. En los dos casos los precios los relee el servidor del
+catálogo: el navegador solo dice qué se vende y cuánto.
+
+### El historial
+
+En **Panel → Ventas** se filtra por fecha, cliente, producto, servicio, estado,
+canal, rango de valor y texto libre (número de venta, nombre, documento o
+correo). Buscar por artículo mira dentro del detalle con un `EXISTS`, no con un
+`JOIN`: con el `JOIN`, una venta de dos líneas saldría repetida en la lista.
+
+Una venta no se borra. Se **anula**, y entonces sigue apareciendo en el
+historial pero deja de sumar en los reportes y en las gráficas. Solo el
+administrador puede hacerlo.
+
+### El reporte diario
+
+En la misma pantalla se elige una fecha y se descarga en **PDF** o en **Excel**.
+Los dos salen de los mismos datos, así que no pueden contar cosas distintas.
+
+- El **PDF** va apaisado, con el membrete de BIXE, una fila por venta y el
+  cuadre del día al final.
+- El **Excel** trae **autofiltro** y la fila de encabezado fija, que es justo
+  para lo que pide el requerimiento que exista la exportación: poder filtrar y
+  analizar después.
+
+Sobre las cifras: como los precios del catálogo ya incluyen IVA, la venta no le
+suma nada al total. **«Subtotal» es la base gravable** (lo que queda al quitarle
+el impuesto) e **«impuesto» es el IVA que ya venía dentro**, de modo que siempre
+se cumple `subtotal + impuesto = total`. Es el mismo criterio de la factura.
+
+---
+
+## Dashboards
+
+Tres, según el rol, y ninguno con cifras escritas en el frontend: todas salen de
+`/api/estadisticas/ventas` o de `/api/estadisticas/mi-panel`, que las calculan
+en la base de datos.
+
+| Rol | Qué ve |
+|---|---|
+| Administrador | Todo: indicadores, gráficas, más vendidos, facturación y PQR |
+| Empleado | Lo mismo, pero no puede anular ventas ni entrar a usuarios |
+| Cliente | Solo lo suyo: cuánto ha comprado, en qué y sus PQR |
+
+Los filtros —rango de fechas, agrupación por día o por mes, canal, producto y
+servicio— gobiernan a la vez las tarjetas y las dos gráficas.
+
+Las gráficas van **separadas a propósito**: los ingresos en barras y la cantidad
+de ventas en una línea. Juntarlas obligaría a poner un segundo eje vertical, que
+es la forma más fácil de hacer que dos series parezcan relacionadas sin estarlo.
+La serie rellena con ceros los periodos sin ventas; sin eso, la línea uniría el
+lunes con el jueves como si el martes y el miércoles no existieran.
+
+El panel del cliente **no acepta un identificador por parámetro**: lo saca del
+token, así que nadie puede ver las cifras de otra persona cambiando un número en
+la URL.
+
+---
+
+## PQR
+
+Peticiones, quejas, reclamos y sugerencias, en **/pqr**. Puede radicar tanto un
+cliente con sesión como alguien que llega sin cuenta; en ese caso indica un
+nombre y un correo de contacto. Siempre se devuelve un **radicado**
+(`PQR-000001`) con el que se consulta el estado sin necesidad de iniciar sesión.
+
+Los estados son `pendiente → en proceso → respondida → cerrada`, con
+transiciones definidas: una PQR **cerrada no se reabre** —si el cliente insiste,
+radica una nueva y queda el rastro de las dos— y ninguna se da por respondida
+sin tener respuesta.
+
+El personal las atiende en **Panel → PQR**; el cliente ve las suyas, con la
+respuesta del taller, en **Panel → Mis PQR**. Si un cliente pide una PQR ajena
+recibe el mismo 404 que si no existiera, para que nadie averigüe qué radicados
+hay probando números.
+
+---
+
+## Chatbot con Inteligencia Artificial
+
+Un botón flotante en todas las páginas. Resuelve dudas frecuentes, orienta sobre
+los modelos y los servicios, explica cómo comprar y encamina hacia el módulo de
+PQR.
+
+Al modelo se le pasa el **catálogo publicado de verdad** —los modelos, los
+servicios y sus precios, leídos de la base en cada mensaje— y se le prohíbe
+inventar precios, plazos o promociones. La conversación se guarda en
+`conversaciones` y `mensajes`, con una clave que el navegador conserva para no
+perder el hilo al cambiar de página.
+
+### Configurar la IA
+
+```
+PROVEEDOR_IA=anthropic
+IA_API_KEY=la-clave-del-proveedor
+IA_MODELO=
+```
+
+`PROVEEDOR_IA` admite `anthropic` u `openai`. `IA_MODELO` se puede dejar vacío y
+usa el que trae por defecto cada proveedor.
+
+**La clave va en el `.env` y en ningún otro sitio.** No está en el código, no se
+sube al repositorio, no aparece en las respuestas de la API y del fallo solo se
+registra el tipo de excepción, nunca el cuerpo del error, que podría traerla de
+vuelta.
+
+**Sin clave el chat sigue funcionando.** Responde con textos preparados a partir
+del catálogo real en lugar de quedarse mudo delante de un cliente, y lo mismo
+hace si el proveedor falla o tarda demasiado. La insignia de la cabecera del
+chat dice en cuál de los dos modos está: «IA» o «Básico».
+
+---
+
+## Despliegue
+
+El proyecto trae lo necesario para llevarlo a **Railway** (o a cualquier sitio
+que corra contenedores): un `Dockerfile` en cada carpeta y la configuración de
+Nginx para el frontend.
+
+### Backend
+
+`backend-fastapi/Dockerfile` levanta uvicorn en el puerto que indique la
+variable `PORT` de la plataforma. Hay que configurarle:
+
+| Variable | Valor |
+|---|---|
+| `URL_BASE_DATOS` | La que dé el servicio de MySQL de la plataforma |
+| `SECRET_KEY` | Una generada, distinta a la de desarrollo |
+| `ORIGENES_PERMITIDOS` | `["https://tu-frontend.up.railway.app"]` |
+| `ENTORNO` | `produccion` |
+| `DEPURACION` | `false` |
+| `SMTP_*` e `IA_*` | Las mismas que en local |
+
+Con `DEPURACION=false` se apagan `/docs` y `/redoc`. Para la sustentación
+conviene dejarlo en `true`, que es justo lo que el instructor va a querer ver.
+
+Las imágenes subidas desde el panel viven en `uploads/`. En un contenedor eso se
+borra en cada despliegue, así que hay que **montar un volumen** en esa ruta si
+se quiere que sobrevivan.
+
+### Frontend
+
+`frontend/Dockerfile` compila con Node y sirve el resultado con Nginx.
+`VITE_API_URL` **se incrusta al compilar**, no al arrancar, así que va como
+argumento de construcción y apunta a la URL pública del backend.
+
+La configuración de Nginx redirige todo a `index.html`: sin eso, entrar directo
+a `/modelos` o recargar esa página daría un 404, porque en el disco no existe
+ningún archivo con ese nombre —las rutas las resuelve React Router en el
+navegador.
+
+### Orden
+
+1. Crear el servicio de MySQL y cargar los cuatro scripts de `sql/`.
+2. Desplegar el backend con sus variables y anotar su URL pública.
+3. Desplegar el frontend con `VITE_API_URL` apuntando a esa URL.
+4. Volver al backend y poner la URL del frontend en `ORIGENES_PERMITIDOS`.
+
+El paso 4 es el que más se olvida: sin él, el navegador bloquea todas las
+peticiones por CORS y la web aparece vacía sin dar ningún error visible.
+
+---
+
 ## Pruebas de la API
 
 En `backend-fastapi/postman/` hay una colección lista para importar en Postman,
-con 60 peticiones repartidas en 10 carpetas, que cubren GET, POST, PUT, PATCH
+con 90 peticiones repartidas en 14 carpetas, que cubren GET, POST, PUT, PATCH
 y DELETE, incluidos los casos de error (401 sin token, 403 sin permiso, 404,
-409 y 422).
+409 y 422). Las cuatro últimas carpetas son las del quinto avance: ventas y
+reportes, dashboards, PQR y chatbot.
 
 Ejecuta primero **«Login (Administrador)»**: guarda el token en una variable de
 la colección y el resto de peticiones salen ya autenticadas.

@@ -94,11 +94,12 @@ async def ciclo_de_vida(app: FastAPI):
 app = FastAPI(
     title=configuracion.nombre_app,
     description=(
-        "API de BIXE: catálogo de motos y autos, servicios de taller y pedidos.\n\n"
-        "Cuarto avance del proyecto — Tecnólogo en Análisis y Desarrollo de "
+        "API de BIXE: catálogo de motos y autos, servicios de taller, pedidos, "
+        "ventas con reportes, facturación, PQR y chatbot con IA.\n\n"
+        "Quinto avance del proyecto — Tecnólogo en Análisis y Desarrollo de "
         "Software, SENA, Centro de Servicios y Gestión Empresarial."
     ),
-    version="1.0.0",
+    version="2.0.0",
     openapi_tags=TAGS,
     lifespan=ciclo_de_vida,
     license_info={"name": "Uso académico"},

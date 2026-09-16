@@ -36,6 +36,22 @@
     {
       "key": "imagen_servicio_id",
       "value": ""
+    },
+    {
+      "key": "venta_id",
+      "value": ""
+    },
+    {
+      "key": "pqr_id",
+      "value": ""
+    },
+    {
+      "key": "pqr_radicado",
+      "value": ""
+    },
+    {
+      "key": "conversacion",
+      "value": ""
     }
   ],
   "auth": {
@@ -1131,6 +1147,699 @@
               "script": {
                 "exec": [
                   "pm.test('Responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 Ventas y reportes",
+      "item": [
+        {
+          "name": "Registrar venta de mostrador (201)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/ventas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": 3,\n  \"items\": [\n    {\n      \"tipo\": \"servicio\",\n      \"id\": 1,\n      \"cantidad\": 2,\n      \"descuento\": 0\n    }\n  ],\n  \"notas\": \"Pago en efectivo en el taller.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "const v = pm.response.json();",
+                  "pm.collectionVariables.set('venta_id', v.id);",
+                  "pm.test('subtotal + impuesto = total', () => {",
+                  "  pm.expect(v.subtotal + v.impuesto).to.be.closeTo(v.total, 0.02);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Historial de ventas (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas?limite=20"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Historial filtrado por fecha y canal (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas?canal=mostrador&desde=2026-01-01&hasta=2026-12-31"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalle de una venta (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas/{{venta_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte diario en JSON (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas/reporte-diario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte diario en PDF (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas/reporte-diario.pdf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es un PDF', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte diario en Excel (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas/reporte-diario.xlsx"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es un xlsx', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anular una venta (200)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/ventas/{{venta_id}}/anulacion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anularla otra vez (409)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/ventas/{{venta_id}}/anulacion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token (401)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ventas",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12 Dashboards",
+      "item": [
+        {
+          "name": "Panel de ventas (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/estadisticas/ventas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('Trae serie para las graficas', () => {",
+                  "  pm.expect(d.serie).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Panel agrupado por mes (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/estadisticas/ventas?agrupar=mes&desde=2026-01-01&hasta=2026-12-31"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Panel filtrado por servicio (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/estadisticas/ventas?servicio_id=1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rango de fechas invertido (409)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/estadisticas/ventas?desde=2026-12-01&hasta=2026-01-01"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Panel del cliente (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/estadisticas/mi-panel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "13 PQR",
+      "item": [
+        {
+          "name": "Radicar con sesion (201)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/pqr",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"reclamo\",\n  \"asunto\": \"El mantenimiento quedo incompleto\",\n  \"mensaje\": \"Lleve la moto el martes y no revisaron los frenos.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "const p = pm.response.json();",
+                  "pm.collectionVariables.set('pqr_id', p.id);",
+                  "pm.collectionVariables.set('pqr_radicado', p.radicado);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Radicar sin cuenta (201)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/pqr",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"peticion\",\n  \"asunto\": \"Informacion de financiacion\",\n  \"mensaje\": \"Quisiera saber si tienen credito para la Moto Touring.\",\n  \"nombre_contacto\": \"Visitante de prueba\",\n  \"email_contacto\": \"visitante@ejemplo.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin cuenta y sin contacto (409)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/pqr",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"queja\",\n  \"asunto\": \"Falta el contacto\",\n  \"mensaje\": \"Aqui no van ni el nombre ni el correo de contacto.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar por radicado, sin token (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pqr/radicado/{{pqr_radicado}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja del personal (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pqr?estado=pendiente"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mis solicitudes (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pqr/mias"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dar por respondida sin respuesta (409)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/pqr/{{pqr_id}}/estado",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"respondida\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Responder (200)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/pqr/{{pqr_id}}/respuesta",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respuesta\": \"Tienes razon, te agendamos la revision sin costo.\",\n  \"estado\": \"respondida\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar (200)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/pqr/{{pqr_id}}/estado",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"cerrada\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reabrir una cerrada (409)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/pqr/{{pqr_id}}/estado",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"en_proceso\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PQR inexistente (404)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/pqr/999999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "14 Chatbot con IA",
+      "item": [
+        {
+          "name": "Estado del asistente (200)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/chat/estado",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const e = pm.response.json();",
+                  "pm.test('No expone la clave', () => {",
+                  "  pm.expect(JSON.stringify(e).toLowerCase()).to.not.include('sk-');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Primer mensaje, sin sesion (200)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/chat",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Hola, que servicios tiene el taller?\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('conversacion', r.conversacion);",
+                  "pm.test('Responde algo', () => pm.expect(r.respuesta).to.have.length.above(10));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seguir la conversacion (200)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/chat",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Y cuanto vale el cambio de aceite?\",\n  \"conversacion\": \"{{conversacion}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('Mantiene el hilo', () => {",
+                  "  pm.expect(r.historial.length).to.be.at.least(4);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensaje vacio (422)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/chat",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"   \"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 422', () => pm.response.to.have.status(422));"
                 ]
               }
             }

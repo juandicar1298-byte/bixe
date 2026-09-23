@@ -31,6 +31,19 @@ IGNORAR = {
 }
 
 
+def tapar_correo(correo: str) -> str:
+    """ana.ruiz@ejemplo.com → a******@ejemplo.com
+
+    El repositorio es público y estas capturas salen de la base de datos de
+    verdad. El dominio se deja porque ayuda a leer la evidencia y no
+    identifica a nadie.
+    """
+    if "@" not in correo:
+        return correo
+    nombre, dominio = correo.split("@", 1)
+    return f"{nombre[:1]}{'*' * 6}@{dominio}"
+
+
 def arbol(carpeta: Path, prefijo: str = "", profundidad: int = 2) -> list[str]:
     if profundidad == 0:
         return []
@@ -117,8 +130,9 @@ def base_de_datos() -> None:
     print("  con-tabla-usuarios.png")
 
     # --- Contraseñas hasheadas ---
-    # El hash se corta: basta el prefijo $2b$ para demostrar que es bcrypt, y
-    # no hay motivo para publicar el hash completo de nadie.
+    # Se recorta el hash y se tapa el correo. El repositorio es público y esto
+    # son datos de personas reales; para demostrar que la contraseña está
+    # hasheada basta con ver el prefijo $2b$, no hace falta saber de quién es.
     lineas = [
         "> SELECT email, password, id_rol, estado FROM usuarios LIMIT 4",
         "",
@@ -126,7 +140,7 @@ def base_de_datos() -> None:
         "",
     ]
     for email, password, rol, estado in muestras:
-        lineas.append(f"  {email:<28} {password[:24]}...  rol={rol}  {estado}")
+        lineas.append(f"  {tapar_correo(email):<28} {password[:12]}...  rol={rol}  {estado}")
     lineas += [
         "",
         "# $2b$ es la marca de bcrypt. Ninguna contrasena se guarda en claro",

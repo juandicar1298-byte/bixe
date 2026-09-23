@@ -190,6 +190,37 @@ def sin_cortina(pagina) -> None:
     pagina.evaluate("sessionStorage.setItem('bixe:cortina-vista','1')")
 
 
+# Correos, documentos y teléfonos de la pantalla, tapados antes de la foto.
+#
+# El repositorio es público y estas capturas salen de la base de datos de
+# verdad, con personas de verdad dentro. Se recorren los nodos de texto en vez
+# de apuntar a unas clases concretas: así sigue funcionando aunque cambie la
+# maquetación de la tabla.
+TAPAR_DATOS = """
+() => {
+  const correo = /([\\w.+-])[\\w.+-]*@([\\w.-]+)/g;
+  const numeroLargo = /\\b(\\d{2})\\d{5,}\\b/g;
+
+  const paseo = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const nodos = [];
+  while (paseo.nextNode()) nodos.push(paseo.currentNode);
+
+  nodos.forEach((nodo) => {
+    const antes = nodo.nodeValue;
+    const despues = antes
+      .replace(correo, (_, inicial, dominio) => `${inicial}******@${dominio}`)
+      .replace(numeroLargo, (_, inicio) => `${inicio}••••••`);
+    if (antes !== despues) nodo.nodeValue = despues;
+  });
+}
+"""
+
+
+def tapar_datos_personales(pagina) -> None:
+    pagina.evaluate(TAPAR_DATOS)
+    pagina.wait_for_timeout(300)
+
+
 # ------------------------------- Capturas -------------------------------
 
 
@@ -273,6 +304,7 @@ def capturas_web(navegador) -> None:
             if pagina.locator("text=Usuarios").count():
                 pagina.click("text=Usuarios")
                 pagina.wait_for_timeout(1200)
+            tapar_datos_personales(pagina)
             foto(pagina, SALIDA / "web-crud-usuarios.png")
 
             # El saludo del Navbar está en la cabecera del sitio público, no

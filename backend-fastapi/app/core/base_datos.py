@@ -8,10 +8,15 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 
 from app.core.configuracion import configuracion
+from app.core.url_base_datos import adaptar_a_asyncpg
 
 # El proyecto corre sobre MySQL en local (XAMPP) y sobre PostgreSQL en la nube
 # (Neon). Lo único que cambia es la URL; el resto del código es el mismo.
-ES_MYSQL = configuracion.url_base_datos.startswith("mysql")
+#
+# La cadena se adapta al vuelo porque en Render se pega tal cual la da Neon,
+# y ahí no hay ocasión de corregirla a mano.
+URL = adaptar_a_asyncpg(configuracion.url_base_datos)
+ES_MYSQL = URL.startswith("mysql")
 
 # pool_pre_ping comprueba que la conexión siga viva antes de usarla.
 #
@@ -42,7 +47,7 @@ CONFIGURACION_DEL_POOL = (
 
 # El motor se crea una sola vez para todo el proceso.
 motor = create_async_engine(
-    configuracion.url_base_datos,
+    URL,
     echo=False,
     **CONFIGURACION_DEL_POOL,
 )

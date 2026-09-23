@@ -35,6 +35,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # no
 
 from app.core.base_datos import Base  # noqa: E402
 from app.core.configuracion import configuracion  # noqa: E402
+from app.core.url_base_datos import adaptar_a_asyncpg  # noqa: E402
 from app.core.seguridad import hashear_contrasena  # noqa: E402
 from app.models.bixe import Permiso, Rol, Usuario, roles_permisos  # noqa: E402
 from app.schemas.comunes import validar_contrasena  # noqa: E402
@@ -155,17 +156,7 @@ def resolver_url() -> str:
     if url is None:
         raise SystemExit("\n  Sin cadena de conexión no hay nada que preparar.")
 
-    # Neon la entrega en el formato de psycopg y aquí se usa asyncpg. Son dos
-    # cambios siempre iguales, así que se hacen aquí en vez de pedirle a quien
-    # despliega que se acuerde de hacerlos a mano.
-    if url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-        print("  (ajustado a postgresql+asyncpg://)")
-    if "sslmode=" in url:
-        url = url.replace("sslmode=", "ssl=")
-        print("  (ajustado sslmode= a ssl=)")
-
-    return url
+    return adaptar_a_asyncpg(url, avisar=print)
 
 
 async def principal() -> int:

@@ -549,13 +549,17 @@ asyncpg no reconoce el parámetro y falla al conectar.
 4. Con esa cadena, deja la base lista **desde tu propio computador**:
 
 ```
-.venv/Scripts/python.exe scripts/preparar_base.py
+.venv/Scripts/python.exe scripts/preparar_base.py --url
 ```
 
-Léelo antes de ejecutarlo: usa la `URL_BASE_DATOS` de tu `.env`, así que
-cámbiala temporalmente por la de Neon, o pásala como variable de entorno solo
-para ese comando. El script crea las 18 tablas, siembra los roles y los
-permisos, y te pide los datos del primer administrador. Es idempotente.
+Con `--url` pide la cadena por teclado sin mostrarla, que es lo que hace falta
+aquí: lleva la contraseña dentro y así no queda en el historial de la consola
+ni escrita en ningún archivo. Además hace por su cuenta los dos ajustes de
+formato del punto anterior, así que se le puede pegar tal cual la da Neon.
+
+Crea las 18 tablas, siembra los roles y los permisos, y te pide los datos del
+primer administrador. Es idempotente. Sin `--url` trabaja sobre la base del
+`.env`, que en local es MySQL.
 
 ### 2. Render — el backend
 

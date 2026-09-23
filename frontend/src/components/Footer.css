@@ -1,0 +1,25 @@
+.footer {
+  background: #131824;
+  border-top: 1px solid rgba(123, 47, 247, 0.3);
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+}
+
+.footer-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 2px;
+}
+
+.footer-text {
+  color: #94a3b8;
+  margin: 10px 0;
+}
+
+.footer-copy {
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 15px;
+}

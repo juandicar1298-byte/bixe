@@ -9,6 +9,12 @@ es URL_BASE_DATOS, no el script.
 
 Uso, desde backend-fastapi/:
     .venv/Scripts/python.exe scripts/preparar_base.py
+    .venv/Scripts/python.exe scripts/preparar_base.py --url
+
+Sin argumentos usa la URL_BASE_DATOS del .env, que en local es MySQL. Con
+--url la pide por teclado sin mostrarla, que es lo que hace falta para
+apuntar a Neon: esa cadena lleva la contraseña dentro y así no queda en el
+historial de la consola ni escrita en ningún archivo.
 
 Es idempotente: ejecutarlo dos veces no duplica nada ni pisa lo que ya haya.
 La contraseña del administrador se pide por teclado y no se ve en pantalla.
@@ -137,11 +143,37 @@ async def crear_administrador(sesion) -> None:
     print(f"\n  Administrador creado: {email}")
 
 
-async def principal() -> int:
-    motor = create_async_engine(configuracion.url_base_datos)
-    destino = configuracion.url_base_datos.split("@")[-1]
+def resolver_url() -> str:
+    """La base sobre la que trabajar: la del .env o una que se pida al vuelo."""
+    if "--url" not in sys.argv:
+        return configuracion.url_base_datos
 
-    print("Preparar la base de datos de BIXE")
+    print("\nPega la cadena de conexión y pulsa Enter.")
+    print("No se verá nada mientras la pegas: lleva la contraseña dentro.\n")
+
+    url = leer_secreto("  URL: ")
+    if url is None:
+        raise SystemExit("\n  Sin cadena de conexión no hay nada que preparar.")
+
+    # Neon la entrega en el formato de psycopg y aquí se usa asyncpg. Son dos
+    # cambios siempre iguales, así que se hacen aquí en vez de pedirle a quien
+    # despliega que se acuerde de hacerlos a mano.
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        print("  (ajustado a postgresql+asyncpg://)")
+    if "sslmode=" in url:
+        url = url.replace("sslmode=", "ssl=")
+        print("  (ajustado sslmode= a ssl=)")
+
+    return url
+
+
+async def principal() -> int:
+    url = resolver_url()
+    motor = create_async_engine(url)
+    destino = url.split("@")[-1]
+
+    print("\nPreparar la base de datos de BIXE")
     print("=" * 33)
     print(f"\nDestino: {destino}")
 

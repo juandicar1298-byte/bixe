@@ -4,6 +4,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import catalogo as crud_catalogo
+from app.crud.periodos import periodo as recortar_periodo
 from app.models.bixe import Pedido, PedidoItem, Producto, Rol, Servicio, Usuario
 
 MESES_DE_HISTORIA = 6
@@ -75,7 +76,7 @@ async def _pedidos_por_estado(sesion: AsyncSession) -> list[dict]:
 
 
 async def _ventas_por_mes(sesion: AsyncSession) -> list[dict]:
-    mes = func.date_format(Pedido.fecha_creacion, "%Y-%m").label("mes")
+    mes = recortar_periodo(Pedido.fecha_creacion, "mes").label("mes")
     filas = (
         await sesion.execute(
             select(

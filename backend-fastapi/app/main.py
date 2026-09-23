@@ -70,11 +70,25 @@ async def ciclo_de_vida(app: FastAPI):
     except (SQLAlchemyError, OSError) as error:
         # Sin base de datos la API no sirve de nada. Se corta aquí con un
         # mensaje claro en lugar de dejar un traceback de treinta líneas.
+        #
+        # El consejo cambia según dónde esté corriendo: en local casi siempre
+        # es que MySQL está apagado; en la nube, que la URL o el certificado
+        # no son los que espera el proveedor.
+        if configuracion.url_base_datos.startswith("mysql"):
+            consejo = (
+                "Enciende MySQL/MariaDB (en XAMPP, el botón Start de MySQL) y "
+                "vuelve a arrancar la API."
+            )
+        else:
+            consejo = (
+                "Revisa URL_BASE_DATOS: con PostgreSQL tiene que empezar por "
+                "postgresql+asyncpg:// y, en Neon, terminar en ?ssl=require."
+            )
+
         logger.error(
-            "No se pudo conectar a la base de datos. "
-            "Enciende MySQL/MariaDB (en XAMPP, el botón Start de MySQL) y "
-            "vuelve a arrancar la API. La conexión se configura en "
-            "backend-fastapi/.env, en URL_BASE_DATOS. Detalle: %s",
+            "No se pudo conectar a la base de datos. %s La conexión se "
+            "configura en la variable URL_BASE_DATOS. Detalle: %s",
+            consejo,
             error,
         )
         raise SystemExit(1) from None

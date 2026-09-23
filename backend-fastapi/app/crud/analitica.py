@@ -12,6 +12,7 @@ from datetime import date, datetime, time, timedelta
 from sqlalchemy import Select, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.crud.periodos import periodo as recortar_periodo
 from app.models.bixe import (
     DetalleVenta,
     Factura,
@@ -117,8 +118,7 @@ async def serie(
     uniría el lunes con el jueves como si el martes y el miércoles no
     existieran, y se leería una tendencia que no es.
     """
-    formato = "%Y-%m-%d" if agrupar == "dia" else "%Y-%m"
-    periodo = func.date_format(Venta.fecha, formato).label("periodo")
+    periodo = recortar_periodo(Venta.fecha, agrupar).label("periodo")
 
     base = _filtrar(_acotar(select(Venta), desde, hasta), **filtros)
     consulta = base.with_only_columns(

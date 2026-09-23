@@ -1,0 +1,66 @@
+# Despliegue del backend en Render.
+#
+# Render lee este archivo si se usa "Blueprint" al crear el servicio. Tambien
+# se puede crear a mano un Web Service con los mismos valores; lo que no se
+# puede omitir son las variables de entorno marcadas como sync: false, que se
+# escriben en el panel de Render y nunca aqui.
+#
+# La base de datos vive aparte, en Neon (PostgreSQL). Render solo corre la API.
+
+services:
+  - type: web
+    name: bixe-api
+    runtime: python
+    region: oregon
+    plan: free
+
+    # El proyecto tiene el backend en una subcarpeta.
+    rootDir: backend-fastapi
+
+    buildCommand: pip install -r requirements.txt
+
+    # Sin --reload: eso es para desarrollo. El puerto lo fija Render en PORT.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+    healthCheckPath: /salud
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+
+      - key: ENTORNO
+        value: produccion
+
+      # En true deja accesible /docs, que es lo que se ensena en la
+      # sustentacion. En un proyecto real iria en false.
+      - key: DEPURACION
+        value: "true"
+
+      # Las que llevan secretos o dependen de las URL que asigne cada
+      # plataforma se escriben en el panel de Render, no aqui.
+      - key: URL_BASE_DATOS
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ORIGENES_PERMITIDOS
+        sync: false
+      - key: URL_FRONTEND
+        sync: false
+
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PUERTO
+        value: "587"
+      - key: SMTP_TLS
+        value: "true"
+      - key: SMTP_USUARIO
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+
+      - key: PROVEEDOR_IA
+        value: groq
+      - key: IA_API_KEY
+        sync: false
+      - key: IA_MODELO
+        value: openai/gpt-oss-120b

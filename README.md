@@ -114,7 +114,7 @@ los nombres de las variables y sin valores reales; el `.env` está en
 
 | Variable | Dónde | Para qué |
 |---|---|---|
-| `URL_BASE_DATOS` | backend-fastapi | Conexión a MySQL |
+| `URL_BASE_DATOS` | backend-fastapi | Conexión a la base. MySQL en local, PostgreSQL en la nube |
 | `SECRET_KEY` | backend-fastapi | Firma de los JWT. Generar con `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `ORIGENES_PERMITIDOS` | backend-fastapi | Lista explícita de orígenes para CORS |
 | `SMTP_*` | backend-fastapi | Correo de recuperación de contraseña |
@@ -506,51 +506,129 @@ chat dice en cuál de los dos modos está: «IA» o «Básico».
 
 ## Despliegue
 
-El proyecto trae lo necesario para llevarlo a **Railway** (o a cualquier sitio
-que corra contenedores): un `Dockerfile` en cada carpeta y la configuración de
-Nginx para el frontend.
+En tres servicios gratuitos, uno por capa:
 
-### Backend
+| Capa | Servicio | Qué corre ahí |
+|---|---|---|
+| Base de datos | **Neon** | PostgreSQL |
+| Backend | **Render** | La API de FastAPI |
+| Frontend | **Vercel** | La web compilada |
 
-`backend-fastapi/Dockerfile` levanta uvicorn en el puerto que indique la
-variable `PORT` de la plataforma. Hay que configurarle:
+### Un apunte antes de empezar: dos motores
+
+En local el proyecto usa **MySQL** (XAMPP) y en la nube **PostgreSQL** (Neon).
+No hay dos versiones del código: lo único que cambia es `URL_BASE_DATOS`.
+
+Eso obligó a evitar el SQL que solo entiende uno de los dos. El único sitio
+donde aparecía era al agrupar por día o por mes: MySQL lo hace con
+`DATE_FORMAT` y PostgreSQL con `TO_CHAR`, con formatos distintos. En vez de
+escribir dos versiones de cada consulta, `app/crud/periodos.py` aprovecha algo
+que los dos hacen igual —convertir una fecha a texto da `AAAA-MM-DD HH:MM:SS`—
+y se queda con los primeros caracteres.
+
+Las tablas las crea SQLAlchemy a partir de los modelos, así que los scripts de
+`sql/`, que son de MySQL, **no hacen falta en la nube**.
+
+### 1. Neon — la base de datos
+
+1. Crea un proyecto en **https://neon.com**. Te da una cadena de conexión.
+2. **Usa la cadena directa, no la que dice `-pooler`.** La API mantiene su
+   propio grupo de conexiones y no necesita el intermediario.
+3. Hay que adaptarla, porque Neon la da en el formato de `psycopg` y aquí se
+   usa `asyncpg`:
+
+```
+   Neon te da:  postgresql://usuario:clave@ep-xxx.aws.neon.tech/bixe?sslmode=require
+   Tú necesitas: postgresql+asyncpg://usuario:clave@ep-xxx.aws.neon.tech/bixe?ssl=require
+```
+
+Son dos cambios: `postgresql` → `postgresql+asyncpg` y `sslmode` → `ssl`.
+Sin el primero, SQLAlchemy intenta usar un driver síncrono; sin el segundo,
+asyncpg no reconoce el parámetro y falla al conectar.
+
+4. Con esa cadena, deja la base lista **desde tu propio computador**:
+
+```
+.venv/Scripts/python.exe scripts/preparar_base.py
+```
+
+Léelo antes de ejecutarlo: usa la `URL_BASE_DATOS` de tu `.env`, así que
+cámbiala temporalmente por la de Neon, o pásala como variable de entorno solo
+para ese comando. El script crea las 18 tablas, siembra los roles y los
+permisos, y te pide los datos del primer administrador. Es idempotente.
+
+### 2. Render — el backend
+
+Render lee `render.yaml` si creas el servicio como **Blueprint**; si lo creas a
+mano, los valores son los mismos:
+
+- **Root directory:** `backend-fastapi`
+- **Build:** `pip install -r requirements.txt`
+- **Start:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Health check:** `/salud`
+
+Variables de entorno, en el panel de Render:
 
 | Variable | Valor |
 |---|---|
-| `URL_BASE_DATOS` | La que dé el servicio de MySQL de la plataforma |
-| `SECRET_KEY` | Una generada, distinta a la de desarrollo |
-| `ORIGENES_PERMITIDOS` | `["https://tu-frontend.up.railway.app"]` |
+| `URL_BASE_DATOS` | La cadena de Neon ya adaptada |
+| `SECRET_KEY` | Una nueva, **distinta a la de tu `.env` local** |
 | `ENTORNO` | `produccion` |
-| `DEPURACION` | `false` |
-| `SMTP_*` e `IA_*` | Las mismas que en local |
+| `DEPURACION` | `true` para que `/docs` siga visible en la sustentación |
+| `ORIGENES_PERMITIDOS` | Se rellena en el paso 4 |
+| `URL_FRONTEND` | Se rellena en el paso 4 |
+| `SMTP_*` | Las mismas de tu `.env` |
+| `PROVEEDOR_IA`, `IA_API_KEY`, `IA_MODELO` | Las mismas de tu `.env` |
 
-Con `DEPURACION=false` se apagan `/docs` y `/redoc`. Para la sustentación
-conviene dejarlo en `true`, que es justo lo que el instructor va a querer ver.
+Anota la URL que te asigne, del estilo `https://bixe-api.onrender.com`.
 
-Las imágenes subidas desde el panel viven en `uploads/`. En un contenedor eso se
-borra en cada despliegue, así que hay que **montar un volumen** en esa ruta si
-se quiere que sobrevivan.
+### 3. Vercel — el frontend
 
-### Frontend
+- **Root directory:** `frontend`
+- Framework: Vite (lo detecta solo)
+- Variable de entorno: `VITE_API_URL` = la URL de Render, **sin barra al final**
 
-`frontend/Dockerfile` compila con Node y sirve el resultado con Nginx.
-`VITE_API_URL` **se incrusta al compilar**, no al arrancar, así que va como
-argumento de construcción y apunta a la URL pública del backend.
+`frontend/vercel.json` ya trae la redirección a `index.html`. Sin ella, entrar
+directo a `/modelos` o recargar esa página daría un 404: las rutas las resuelve
+React Router en el navegador y en el disco no existe ningún archivo con ese
+nombre.
 
-La configuración de Nginx redirige todo a `index.html`: sin eso, entrar directo
-a `/modelos` o recargar esa página daría un 404, porque en el disco no existe
-ningún archivo con ese nombre —las rutas las resuelve React Router en el
-navegador.
+`VITE_API_URL` se incrusta al compilar, no al arrancar. Si la cambias después,
+hay que volver a desplegar; no basta con reiniciar.
 
-### Orden
+### 4. Volver a Render
 
-1. Crear el servicio de MySQL y cargar los cuatro scripts de `sql/`.
-2. Desplegar el backend con sus variables y anotar su URL pública.
-3. Desplegar el frontend con `VITE_API_URL` apuntando a esa URL.
-4. Volver al backend y poner la URL del frontend en `ORIGENES_PERMITIDOS`.
+Con la URL de Vercel ya asignada, en Render:
 
-El paso 4 es el que más se olvida: sin él, el navegador bloquea todas las
-peticiones por CORS y la web aparece vacía sin dar ningún error visible.
+```
+ORIGENES_PERMITIDOS=["https://tu-proyecto.vercel.app"]
+URL_FRONTEND=https://tu-proyecto.vercel.app
+```
+
+**Este es el paso que más se olvida.** Sin él, el navegador bloquea todas las
+peticiones por CORS y la web aparece vacía sin dar ningún error a la vista; hay
+que abrir la consola para enterarse. `URL_FRONTEND` además es la base de los
+enlaces de recuperación de contraseña: si queda apuntando a `localhost`, los
+correos llegan con un enlace que no funciona fuera de tu computador.
+
+### Dos límites del plan gratuito
+
+**Render duerme el servicio** tras unos minutos sin tráfico, y despertarlo tarda
+cerca de un minuto. La primera visita después de un rato parece que la web está
+rota. Antes de la sustentación, abre la URL de la API y espera a que responda.
+
+**El disco de Render se borra en cada despliegue.** Las imágenes que se suban
+desde el panel viven en `uploads/`, así que desaparecen. Para el catálogo hay
+una salida sin pagar nada: el campo de imagen acepta también una URL completa
+(`https://…`), y esas sí sobreviven porque no se guardan en el servidor.
+
+### Si prefieres contenedores
+
+Hay un `Dockerfile` en cada carpeta, de cuando el destino iba a ser Railway.
+Siguen valiendo para cualquier plataforma que corra contenedores, Render
+incluida. Con Render y Vercel no hacen falta: el primero instala las
+dependencias y arranca uvicorn por su cuenta, y el segundo compila el
+frontend y lo sirve él mismo.
 
 ---
 

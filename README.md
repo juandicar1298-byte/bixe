@@ -118,8 +118,8 @@ los nombres de las variables y sin valores reales; el `.env` está en
 | `SECRET_KEY` | backend-fastapi | Firma de los JWT. Generar con `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `ORIGENES_PERMITIDOS` | backend-fastapi | Lista explícita de orígenes para CORS |
 | `SMTP_*` | backend-fastapi | Correo de recuperación de contraseña |
-| `PROVEEDOR_IA` | backend-fastapi | `anthropic`, `openai` o vacío |
-| `IA_API_KEY` | backend-fastapi | Clave del servicio de IA del chatbot |
+| `PROVEEDOR_IA` | backend-fastapi | `groq`, `openai`, `anthropic` o vacío |
+| `IA_API_KEY` | backend-fastapi | Clave del servicio de IA. En Groq se saca en console.groq.com/keys |
 | `IA_MODELO` | backend-fastapi | Modelo a usar; vacío para el que trae por defecto |
 | `VITE_API_URL` | frontend | A qué backend apunta la web |
 
@@ -451,14 +451,33 @@ perder el hilo al cambiar de página.
 
 ### Configurar la IA
 
+El proyecto usa **Groq**: habla el mismo idioma que la API de OpenAI, responde
+rápido y tiene capa gratuita, que para un proyecto de formación es lo que
+importa. La clave se saca en **https://console.groq.com/keys**.
+
 ```
-PROVEEDOR_IA=anthropic
-IA_API_KEY=la-clave-del-proveedor
+PROVEEDOR_IA=groq
+IA_API_KEY=gsk_...
 IA_MODELO=
 ```
 
-`PROVEEDOR_IA` admite `anthropic` u `openai`. `IA_MODELO` se puede dejar vacío y
-usa el que trae por defecto cada proveedor.
+`PROVEEDOR_IA` admite `groq`, `openai` y `anthropic`. Los dos primeros comparten
+código —Groq expone la misma API— y solo cambian la dirección y el modelo por
+defecto. `IA_MODELO` se puede dejar vacío: en Groq usa `llama-3.3-70b-versatile`.
+
+Para comprobar que quedó bien:
+
+```
+.venv/Scripts/python.exe scripts/probar_ia.py
+```
+
+Lista los modelos que acepta tu clave, hace una pregunta de prueba y, si algo
+falla, dice qué. Distingue los casos que importan: clave rechazada, modelo que
+no existe en ese proveedor, cupo agotado o falta de conexión. Si pegaste la
+clave de otro proveedor también lo avisa, porque cada uno tiene su prefijo
+(`gsk_` en Groq, `sk-` en OpenAI, `sk-ant-` en Anthropic) y es un error fácil
+de cometer y difícil de ver. De la clave solo enseña los cuatro primeros
+caracteres y cuántos tiene.
 
 **La clave va en el `.env` y en ningún otro sitio.** No está en el código, no se
 sube al repositorio, no aparece en las respuestas de la API y del fallo solo se

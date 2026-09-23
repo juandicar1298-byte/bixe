@@ -192,6 +192,13 @@ def responder_sin_ia(mensaje: str, catalogo: dict) -> str:
 
 # ------------------------------ Con el modelo ------------------------------
 
+# Groq expone la misma API que OpenAI, solo que en otra dirección, así que las
+# dos comparten código: lo único que cambia es la URL y el modelo por defecto.
+COMPATIBLES_OPENAI = {
+    "openai": ("https://api.openai.com/v1", "gpt-4o-mini"),
+    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
+}
+
 
 async def _preguntar_anthropic(sistema: str, turnos: list[dict]) -> str:
     async with httpx.AsyncClient(timeout=TIEMPO_LIMITE) as cliente:
@@ -214,16 +221,19 @@ async def _preguntar_anthropic(sistema: str, turnos: list[dict]) -> str:
     return "".join(p.get("text", "") for p in partes).strip()
 
 
-async def _preguntar_openai(sistema: str, turnos: list[dict]) -> str:
+async def _preguntar_compatible(proveedor: str, sistema: str, turnos: list[dict]) -> str:
+    """Para los que hablan el dialecto de OpenAI: el propio OpenAI y Groq."""
+    base, modelo_por_defecto = COMPATIBLES_OPENAI[proveedor]
+
     async with httpx.AsyncClient(timeout=TIEMPO_LIMITE) as cliente:
         respuesta = await cliente.post(
-            "https://api.openai.com/v1/chat/completions",
+            f"{base}/chat/completions",
             headers={
                 "Authorization": f"Bearer {configuracion.ia_api_key}",
                 "Content-Type": "application/json",
             },
             json={
-                "model": configuracion.ia_modelo or "gpt-4o-mini",
+                "model": configuracion.ia_modelo or modelo_por_defecto,
                 "max_tokens": MAXIMO_TOKENS,
                 "messages": [{"role": "system", "content": sistema}, *turnos],
             },
@@ -235,7 +245,19 @@ async def _preguntar_openai(sistema: str, turnos: list[dict]) -> str:
     return (opciones[0].get("message", {}).get("content") or "").strip()
 
 
-PROVEEDORES = {"anthropic": _preguntar_anthropic, "openai": _preguntar_openai}
+async def _preguntar_openai(sistema: str, turnos: list[dict]) -> str:
+    return await _preguntar_compatible("openai", sistema, turnos)
+
+
+async def _preguntar_groq(sistema: str, turnos: list[dict]) -> str:
+    return await _preguntar_compatible("groq", sistema, turnos)
+
+
+PROVEEDORES = {
+    "anthropic": _preguntar_anthropic,
+    "openai": _preguntar_openai,
+    "groq": _preguntar_groq,
+}
 
 
 async def responder(

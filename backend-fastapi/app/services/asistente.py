@@ -196,7 +196,10 @@ def responder_sin_ia(mensaje: str, catalogo: dict) -> str:
 # dos comparten código: lo único que cambia es la URL y el modelo por defecto.
 COMPATIBLES_OPENAI = {
     "openai": ("https://api.openai.com/v1", "gpt-4o-mini"),
-    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
+    # Groq renueva su catalogo cada cierto tiempo y retira modelos. Si este
+    # deja de existir, scripts/probar_ia.py lista los que si hay y dice que
+    # poner en IA_MODELO.
+    "groq": ("https://api.groq.com/openai/v1", "openai/gpt-oss-120b"),
 }
 
 

@@ -123,8 +123,14 @@ def main() -> int:
 
     guardar(clave, proveedor)
 
-    # Se importa aquí, después de escribir, para que la configuración se lea
-    # del .env ya actualizado.
+    # La configuración se leyó del .env al importar probar_ia, es decir antes
+    # de escribir la clave, así que en memoria sigue vacía. Se pone al día a
+    # mano; releer el archivo entero solo para esto sería dar un rodeo.
+    from app.core.configuracion import configuracion  # noqa: PLC0415
+
+    configuracion.proveedor_ia = proveedor
+    configuracion.ia_api_key = clave
+
     print("\nComprobando contra el proveedor…")
     from probar_ia import main as comprobar  # noqa: PLC0415
 

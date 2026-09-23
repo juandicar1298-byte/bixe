@@ -58,6 +58,16 @@ def proveedor_de_la_clave(clave: str) -> str | None:
     return None
 
 
+# Los que no sirven para conversar: transcripción de audio y clasificadores
+# de seguridad. Salen en la lista del proveedor, pero elegir uno de estos da
+# un error que no se entiende.
+NO_SON_DE_CHAT = ("whisper", "tts", "guard", "orpheus")
+
+
+def son_de_chat(modelos: list[str]) -> list[str]:
+    return [m for m in modelos if not any(p in m.lower() for p in NO_SON_DE_CHAT)]
+
+
 def rotulo(texto: str) -> None:
     print(f"\n{texto}\n{'-' * len(texto)}")
 
@@ -136,10 +146,14 @@ def explicar(error: Exception) -> str:
                 f"  Revisa que sea una de {proveedor}, que esté completa y que no\n"
                 f"  esté revocada: {DONDE_SACARLA.get(proveedor, '')}"
             )
-        if codigo == 404:
+        # Un modelo retirado llega como 400 en unos proveedores y como 404 en
+        # otros, así que se mira el cuerpo en lugar de fiarse solo del código.
+        if codigo in (400, 404) and "model" in error.response.text.lower():
+            usado = configuracion.ia_modelo or "el que trae por defecto"
             return (
-                f"No existe el modelo «{configuracion.ia_modelo}» en {proveedor}.\n"
-                "  Arriba tienes la lista de los que sí; copia uno en IA_MODELO."
+                f"{proveedor} no reconoce el modelo «{usado}».\n"
+                "  Los proveedores retiran modelos cada cierto tiempo; arriba\n"
+                "  tienes los que sí acepta tu clave."
             )
         if codigo == 429:
             return (
@@ -169,28 +183,44 @@ async def preguntar(texto: str) -> int:
         print(f"  {explicar(error)}")
         return 1
 
+    utiles = son_de_chat(modelos)
     if modelos:
-        rotulo(f"Modelos disponibles ({len(modelos)})")
-        for nombre in modelos:
+        rotulo(f"Modelos para conversar ({len(utiles)} de {len(modelos)})")
+        for nombre in utiles:
             marca = " <- el configurado" if nombre == configuracion.ia_modelo else ""
             print(f"  {nombre}{marca}")
 
     rotulo("Pregunta de prueba")
     print(f"  {texto}\n")
 
-    # Se le pasa el catálogo vacío a propósito: esto comprueba la conexión con
-    # el proveedor, no lo que el modelo sabe del negocio. Con la base de datos
-    # de por medio, un fallo de MySQL parecería un fallo de la IA.
-    respuesta, origen = await asistente.responder(
-        texto, [], {"productos": [], "servicios": []}
+    # Se llama al proveedor directamente y no a asistente.responder(), que
+    # atrapa el error y contesta con el catálogo: eso está bien para un cliente
+    # del chat, pero aquí taparía justo lo que se quiere ver.
+    #
+    # El catálogo va vacío a propósito: esto comprueba la conexión con el
+    # proveedor, no lo que el modelo sabe del negocio. Con la base de datos de
+    # por medio, un fallo de MySQL parecería un fallo de la IA.
+    preguntar_al_modelo = asistente.PROVEEDORES[configuracion.proveedor_ia]
+    sistema = (
+        f"{asistente.PERSONALIDAD}\n\n(Catálogo no cargado: esto es una prueba.)"
     )
 
-    if origen == "local":
-        rotulo("No funcionó")
-        print(
-            "  Contestó el modo básico, no el modelo. El detalle del fallo está\n"
-            "  en el log de la API, en la línea de «bixe.asistente»."
+    try:
+        respuesta = await preguntar_al_modelo(
+            sistema, [{"role": "user", "content": texto}]
         )
+    except (httpx.HTTPError, KeyError, ValueError) as error:
+        rotulo("No funcionó")
+        print(f"  {explicar(error)}")
+
+        if _es_problema_de_modelo(error) and utiles:
+            print("\n  Pon esta línea en backend-fastapi/.env y vuelve a probar:")
+            print(f"\n    IA_MODELO={utiles[0]}")
+        return 1
+
+    if not respuesta:
+        rotulo("No funcionó")
+        print("  El proveedor respondió, pero sin texto.")
         return 1
 
     rotulo("Respondió el modelo")
@@ -199,6 +229,15 @@ async def preguntar(texto: str) -> int:
     rotulo("Todo correcto")
     print("  El chatbot de la web ya responde con IA.")
     return 0
+
+
+def _es_problema_de_modelo(error: Exception) -> bool:
+    """Si el fallo apunta al nombre del modelo y no a la clave o a la red."""
+    if not isinstance(error, httpx.HTTPStatusError):
+        return False
+    if error.response.status_code in (400, 404):
+        return "model" in error.response.text.lower()
+    return False
 
 
 def main() -> int:

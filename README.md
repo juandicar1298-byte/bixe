@@ -455,6 +455,19 @@ El proyecto usa **Groq**: habla el mismo idioma que la API de OpenAI, responde
 rápido y tiene capa gratuita, que para un proyecto de formación es lo que
 importa. La clave se saca en **https://console.groq.com/keys**.
 
+Con la clave a mano, un solo comando lo deja todo listo:
+
+```
+.venv/Scripts/python.exe scripts/configurar_ia.py
+```
+
+Pide la clave sin mostrarla en pantalla, la escribe en el `.env` sin tocar nada
+más del archivo y a continuación pregunta algo al modelo para confirmar que
+responde. Hay que ejecutarlo en una terminal de verdad, porque tiene que
+preguntar. Para otro proveedor, `configurar_ia.py openai`.
+
+A mano queda así:
+
 ```
 PROVEEDOR_IA=groq
 IA_API_KEY=gsk_...

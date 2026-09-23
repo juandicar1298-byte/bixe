@@ -43,6 +43,21 @@ DONDE_SACARLA = {
 }
 
 
+def proveedor_de_la_clave(clave: str) -> str | None:
+    """De quién parece ser la clave, por su prefijo.
+
+    Se comprueban de más largo a más corto: «sk-ant-» también empieza por
+    «sk-», así que mirándolos en cualquier orden una clave de Anthropic se
+    confundiría con una de OpenAI.
+    """
+    for proveedor, prefijo in sorted(
+        PREFIJOS.items(), key=lambda par: len(par[1]), reverse=True
+    ):
+        if clave.startswith(prefijo):
+            return proveedor
+    return None
+
+
 def rotulo(texto: str) -> None:
     print(f"\n{texto}\n{'-' * len(texto)}")
 
@@ -85,10 +100,7 @@ def revisar() -> bool:
 
     esperado = PREFIJOS.get(proveedor)
     if esperado and not clave.startswith(esperado):
-        de_quien = next(
-            (p for p, pre in PREFIJOS.items() if p != proveedor and clave.startswith(pre)),
-            None,
-        )
+        de_quien = proveedor_de_la_clave(clave)
         rotulo("Aviso")
         print(
             f"  Las claves de {proveedor} empiezan por «{esperado}» y esta no."

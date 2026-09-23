@@ -25,3 +25,6 @@ Thumbs.db
 
 # Cachés de Python de los guiones de evidencias
 evidencias/__pycache__/
+
+# Otro proyecto que vive dentro de esta carpeta, con su propio repositorio.
+react-diego/

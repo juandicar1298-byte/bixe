@@ -1,0 +1,60 @@
+# Finales de línea y archivos binarios.
+#
+# En Windows, Git suele venir con core.autocrlf=true: guarda los archivos con
+# LF y los devuelve con CRLF al clonar. Para el código da igual, pero con un
+# archivo binario esa conversión lo destroza.
+#
+# Git intenta adivinar qué es binario buscando bytes nulos al principio del
+# archivo. Con las imágenes acierta, pero un PDF generado por reportlab puede
+# no tener ninguno en los primeros 8 KB: lo toma por texto y al clonarlo lo
+# deja roto (la matriz de validación pasaba de 9.479 a 9.591 bytes y no abría).
+#
+# Por eso aquí se declara explícitamente, en vez de dejarlo a la adivinanza.
+
+# Por defecto: Git decide, y normaliza a LF en el repositorio.
+* text=auto
+
+# Código y texto: siempre LF dentro del repositorio.
+*.py      text eol=lf
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.json    text eol=lf
+*.css     text eol=lf
+*.html    text eol=lf
+*.md      text eol=lf
+*.sql     text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.txt     text eol=lf
+*.ini     text eol=lf
+*.env.example text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+Dockerfile     text eol=lf
+
+# Guiones de Windows: estos sí necesitan CRLF.
+*.ps1     text eol=crlf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+
+# Binarios: ni conversión de líneas ni intento de sacar diferencias.
+*.pdf     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.avif    binary
+*.ico     binary
+*.svg     text eol=lf
+*.woff    binary
+*.woff2   binary
+*.ttf     binary
+*.otf     binary
+*.eot     binary
+*.xlsx    binary
+*.xls     binary
+*.docx    binary
+*.zip     binary
+*.mp4     binary
+*.webm    binary

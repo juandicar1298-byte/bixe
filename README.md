@@ -16,7 +16,9 @@ REACT/
 ├── frontend/           React 19 + Vite + Tailwind 4
 ├── backend-fastapi/    API en Python + FastAPI                    ← la activa
 ├── backend/            API del TERCER avance (Node.js + Express)  ← se conserva
-└── evidencias/         Guiones que generan las capturas de la lista de chequeo
+├── docs/               Documentos de sustentación y matriz de validación
+├── evidencias/         Guiones que generan las capturas de la lista de chequeo
+└── .github/workflows/  Integración y despliegue continuo
 ```
 
 El tercer avance pedía un backend en Node/Express y del cuarto en adelante se
@@ -642,7 +644,45 @@ frontend y lo sirve él mismo.
 
 ---
 
-## Pruebas de la API
+## Pruebas automáticas
+
+92 pruebas con **Pytest**, sobre una base SQLite en memoria: no hace falta tener
+MySQL encendido ni conexión a Neon, y no usan ningún secreto.
+
+```bash
+cd backend-fastapi
+.venv/Scripts/python.exe -m pytest
+```
+
+| Archivo | Qué cubre | Pruebas |
+|---|---|---|
+| `test_autenticacion.py` | Registro, login con JWT, autorización por rol | 22 |
+| `test_catalogo_crud.py` | CRUD completo, validación de esquemas, filtros y paginación | 19 |
+| `test_inyeccion_sql.py` | Defensa contra inyección SQL, contra los tres motores | 24 |
+| `test_pasarela_de_pago.py` | Luhn, cobro, factura, PDF y datos sensibles | 27 |
+
+Se ejecutan solas en GitHub Actions en cada subida y en cada *pull request*
+(`.github/workflows/ci.yml`), junto con `ruff` en el backend y `eslint` más la
+compilación en el frontend. El despliegue a Render solo se dispara si todo eso
+termina en verde.
+
+---
+
+## Documentación
+
+En [`docs/`](docs/README.md) están los documentos de sustentación:
+
+| | |
+|---|---|
+| [Integración y despliegue continuo](docs/12-integracion-y-despliegue-continuo.md) | Cómo se prueba y se despliega cada cambio |
+| [Pasarela de pago](docs/13-pasarela-de-pago.md) | Cómo se cobra y qué no se guarda nunca |
+| [Normalización de la base de datos](docs/14-normalizacion-base-de-datos.md) | 1FN, 2FN y 3FN sobre las 18 tablas |
+| [Conceptos y principios](docs/15-conceptos-y-principios.md) | Clase, objeto, herencia, polimorfismo e instanciación |
+| [Seguridad: inyección SQL](docs/seguridad-inyeccion-sql.md) | Login escalonado y consulta preparada |
+
+---
+
+## Pruebas manuales de la API
 
 En `backend-fastapi/postman/` hay una colección lista para importar en Postman,
 con 90 peticiones repartidas en 14 carpetas, que cubren GET, POST, PUT, PATCH
@@ -657,6 +697,12 @@ la colección y el resto de peticiones salen ya autenticadas.
 
 ## Seguridad
 
+- **Inyección SQL**, por dos caminos: el login está escalonado en dos
+  formularios, de modo que la contraseña nunca forma parte de una consulta, y
+  todas las consultas van preparadas —el valor viaja como parámetro, no dentro
+  de la instrucción—. En todo el proyecto no hay ni una consulta escrita a mano,
+  y una prueba automática falla si alguien introduce alguna.
+  Detalle completo en [`docs/seguridad-inyeccion-sql.md`](docs/seguridad-inyeccion-sql.md).
 - Contraseñas con hash **bcrypt** (`pwdlib`); nunca se guardan ni se devuelven en claro.
 - **JWT** con `sub`, `rol` y `exp`, verificado en cada petición protegida.
 - Se distingue 401 (no autenticado, con cabecera `WWW-Authenticate`) de 403 (sin permiso).

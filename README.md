@@ -571,6 +571,12 @@ mano, los valores son los mismos:
 - **Start:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - **Health check:** `/salud`
 
+La versión de Python la fija `backend-fastapi/.python-version`. Hace falta: si
+se deja que la plataforma elija, coge la más reciente, y de las que aún no
+tienen paquete compilado. Entonces pip intenta compilar `pydantic-core` desde
+el código fuente con Rust y el build falla con `metadata-generation-failed`,
+un mensaje que no menciona la versión de Python por ningún lado.
+
 Variables de entorno, en el panel de Render:
 
 | Variable | Valor |

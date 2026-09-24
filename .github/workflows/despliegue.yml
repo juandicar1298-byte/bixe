@@ -1,0 +1,69 @@
+# Despliegue continuo.
+#
+# Se dispara solo cuando el flujo de CI termina EN VERDE sobre main. Esa es
+# toda la gracia: si una prueba falla, este trabajo no llega a ejecutarse y a
+# producción no sube nada roto.
+#
+# Requiere dos cosas configuradas a mano, una sola vez:
+#
+#   1. En Render → bixe-api → Settings → Build & Deploy:
+#      «Auto-Deploy» en OFF. Si se deja en ON, Render despliega en cuanto
+#      llega el commit, sin esperar a las pruebas, y este control sobra.
+#
+#   2. En GitHub → Settings → Secrets and variables → Actions → New secret:
+#      RENDER_DEPLOY_HOOK_URL, con la URL que da Render en
+#      Settings → Deploy Hook.
+#
+# El enlace lleva una clave dentro, por eso va como secreto del repositorio y
+# no escrito aquí: este archivo es público.
+#
+# Vercel despliega el frontend por su cuenta al recibir el push a main; no
+# necesita gancho.
+
+name: Despliegue
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  desplegar-api:
+    name: Publicar la API en Render
+    runs-on: ubuntu-latest
+    # Solo si CI terminó bien. Un CI en rojo no despliega.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Avisar a Render
+        env:
+          GANCHO: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$GANCHO" ]; then
+            echo "No hay RENDER_DEPLOY_HOOK_URL configurado."
+            echo "Render seguirá desplegando por su cuenta si tiene Auto-Deploy en ON."
+            exit 0
+          fi
+          echo "Lanzando el despliegue…"
+          curl --fail --silent --show-error -X POST "$GANCHO" > /dev/null
+          echo "Render recibió la orden."
+
+      - name: Esperar a que la API vuelva a responder
+        run: |
+          # Render tarda un par de minutos en construir y arrancar. Se
+          # comprueba cada 15 segundos durante 5 minutos como mucho.
+          for intento in $(seq 1 20); do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' https://bixe-api.onrender.com/salud || true)
+            if [ "$codigo" = "200" ]; then
+              echo "La API responde (intento $intento)."
+              exit 0
+            fi
+            echo "Todavía no ($codigo). Reintento en 15 s…"
+            sleep 15
+          done
+          echo "La API no respondió a tiempo. Revisa los logs en Render."
+          exit 1

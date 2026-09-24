@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import StaticPool
 
 from app.core.configuracion import configuracion
 from app.core.url_base_datos import adaptar_a_asyncpg
@@ -17,6 +18,7 @@ from app.core.url_base_datos import adaptar_a_asyncpg
 # y ahí no hay ocasión de corregirla a mano.
 URL = adaptar_a_asyncpg(configuracion.url_base_datos)
 ES_MYSQL = URL.startswith("mysql")
+ES_SQLITE = URL.startswith("sqlite")
 
 # pool_pre_ping comprueba que la conexión siga viva antes de usarla.
 #
@@ -26,8 +28,18 @@ ES_MYSQL = URL.startswith("mysql")
 # En PostgreSQL sí se activa, y ahí hace falta de verdad: Neon suspende la base
 # cuando lleva un rato sin uso y cierra las conexiones abiertas. Sin pre_ping,
 # la primera petición después de un rato de silencio falla.
+#
+# SQLite solo aparece en las pruebas automáticas, con la base en memoria. Ahí
+# hace falta StaticPool: sin él, cada conexión del pool abriría su propia base
+# vacía y las tablas creadas al empezar la prueba no existirían en la
+# siguiente consulta.
 CONFIGURACION_DEL_POOL = (
-    {"pool_recycle": 1800}
+    {
+        "poolclass": StaticPool,
+        "connect_args": {"check_same_thread": False},
+    }
+    if ES_SQLITE
+    else {"pool_recycle": 1800}
     if ES_MYSQL
     else {
         "pool_pre_ping": True,

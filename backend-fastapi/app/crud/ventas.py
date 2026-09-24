@@ -58,8 +58,10 @@ async def _armar_venta(
     fecha: datetime | None = None,
 ) -> Venta:
     """Crea la venta con sus totales ya calculados. No hace commit."""
-    total = _redondear(sum((Decimal(str(l.subtotal)) for l in lineas), Decimal("0")))
-    descuento = _redondear(sum((Decimal(str(l.descuento)) for l in lineas), Decimal("0")))
+    total = _redondear(sum((Decimal(str(fila.subtotal)) for fila in lineas), Decimal("0")))
+    descuento = _redondear(
+        sum((Decimal(str(fila.descuento)) for fila in lineas), Decimal("0"))
+    )
     base, impuesto = calcular_impuesto(total, PORCENTAJE_IVA)
 
     consecutivo = await _siguiente_consecutivo(sesion)

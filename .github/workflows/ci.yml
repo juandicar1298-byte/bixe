@@ -1,0 +1,88 @@
+# Integración continua.
+#
+# Se ejecuta en GitHub cada vez que se sube código a main y en cada pull
+# request. Revisa el estilo y pasa las 92 pruebas del backend, y compila el
+# frontend para comprobar que no se rompió nada por el camino.
+#
+# Si algo de esto falla, GitHub marca el commit en rojo y el trabajo de
+# despliegue no llega a ejecutarse: a producción solo pasa lo que está en
+# verde.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Permite lanzarlo a mano desde la pestaña Actions.
+  workflow_dispatch:
+
+jobs:
+  # ------------------------------------------------------------------
+  backend:
+    name: Backend · estilo y pruebas
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          # La misma versión que usa Render, fijada en .python-version.
+          python-version-file: backend-fastapi/.python-version
+          cache: pip
+          cache-dependency-path: backend-fastapi/requirements-dev.txt
+
+      - name: Instalar dependencias
+        working-directory: backend-fastapi
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Revisar el estilo del código
+        working-directory: backend-fastapi
+        run: ruff check app tests scripts
+
+      - name: Pasar las pruebas
+        working-directory: backend-fastapi
+        # Las pruebas corren sobre SQLite en memoria, así que no hace falta
+        # levantar MySQL ni conectarse a Neon. Tampoco se toca ningún secreto:
+        # tests/conftest.py pone sus propias variables de entorno.
+        run: pytest -v
+
+  # ------------------------------------------------------------------
+  frontend:
+    name: Frontend · estilo y compilación
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        # npm ci instala exactamente lo del package-lock, sin actualizar nada:
+        # así la compilación de hoy es idéntica a la de ayer.
+        run: npm ci
+
+      - name: Revisar el estilo del código
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Compilar
+        working-directory: frontend
+        run: npm run build
+
+      - name: Guardar el resultado de la compilación
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7

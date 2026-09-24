@@ -1,0 +1,10 @@
+# Dependencias que solo hacen falta para desarrollar y para pasar las pruebas.
+# En el servidor no se instalan: Render solo lee requirements.txt.
+-r requirements.txt
+
+pytest==8.3.4
+pytest-asyncio==0.25.0
+# Base en memoria para las pruebas: no hace falta MySQL ni PostgreSQL.
+aiosqlite==0.20.0
+# Revisión de estilo y errores del código.
+ruff==0.8.4

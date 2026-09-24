@@ -193,6 +193,58 @@ async def test_un_empleado_no_puede_gestionar_usuarios(cliente, como_empleado):
     assert respuesta.status_code == 403
 
 
+# --------------------- Recuperación de contraseña ---------------------
+
+
+async def test_pedir_recuperacion_responde_sin_esperar_al_correo(cliente):
+    """El envío va en BackgroundTasks: la respuesta no espera a Gmail."""
+    respuesta = await cliente.post(
+        "/api/auth/recuperar", json={"email": "cliente@pruebas.com"}
+    )
+
+    assert respuesta.status_code == 202, respuesta.text
+    assert "código de" in respuesta.json()["mensaje"]
+
+
+async def test_la_recuperacion_no_dice_si_el_correo_existe(cliente):
+    """Respuesta idéntica exista la cuenta o no: si no, se podrían enumerar."""
+    existe = await cliente.post(
+        "/api/auth/recuperar", json={"email": "cliente@pruebas.com"}
+    )
+    no_existe = await cliente.post(
+        "/api/auth/recuperar", json={"email": "nadie@pruebas.com"}
+    )
+
+    assert existe.status_code == no_existe.status_code == 202
+    assert existe.json() == no_existe.json()
+
+
+async def test_el_codigo_nunca_viaja_en_la_respuesta_fuera_de_desarrollo(cliente):
+    """En pruebas y en producción, el código solo llega por correo."""
+    respuesta = await cliente.post(
+        "/api/auth/recuperar", json={"email": "cliente@pruebas.com"}
+    )
+
+    cuerpo = respuesta.json()
+    assert cuerpo["codigo_recuperacion"] is None
+    assert cuerpo["enlace_recuperacion"] is None
+
+
+async def test_un_codigo_inventado_no_sirve(cliente):
+    await cliente.post("/api/auth/recuperar", json={"email": "cliente@pruebas.com"})
+
+    respuesta = await cliente.post(
+        "/api/auth/verificar-codigo",
+        json={"email": "cliente@pruebas.com", "codigo": "000000"},
+    )
+
+    assert respuesta.status_code == 409
+    assert respuesta.json()["codigo"] == "codigo_recuperacion_invalido"
+
+
+# --------------------------- Bajas de usuarios ---------------------------
+
+
 async def test_solo_el_administrador_borra_usuarios(cliente, como_empleado, como_admin):
     usuarios = await cliente.get("/api/usuarios", headers=como_admin)
     victima = next(u for u in usuarios.json() if u["email"] == "otro@pruebas.com")

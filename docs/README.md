@@ -9,6 +9,7 @@ Aprendiz: Juan Diego Cartagena Tuberquia
 
 | # | Documento | Qué responde |
 |---|---|---|
+| 10 | [Comparativa FastAPI vs Django REST](10-comparativa-fastapi-django.md) | Por qué FastAPI, y en qué tres cosas Django habría ganado |
 | 11 | *Manual técnico* | **Pendiente** — lo aporta el aprendiz |
 | 12 | [Integración y despliegue continuo](12-integracion-y-despliegue-continuo.md) | Cómo se prueban y despliegan los cambios sin tocar nada a mano |
 | 13 | [Pasarela de pago](13-pasarela-de-pago.md) | Cómo se cobra, qué se guarda y qué no se guarda nunca |
@@ -16,9 +17,22 @@ Aprendiz: Juan Diego Cartagena Tuberquia
 | 15 | [Conceptos y principios](15-conceptos-y-principios.md) | Clase, objeto, herencia, polimorfismo, instanciación y para qué sirve cada carpeta |
 | 16 | [Seguridad: inyección SQL](seguridad-inyeccion-sql.md) | Las dos formas de resolverlo: login escalonado y consulta preparada |
 
-**[Matriz de validación actualizada](Matriz_Validacion_Actualizada_3406211.pdf)** —
-la matriz del instructor con el punto 10 eliminado, la renumeración aplicada y
-los criterios nuevos del 11 al 16. Se regenera con:
+## La matriz de validación
+
+La matriz del instructor con el punto 10 (Frontend – React) eliminado, la
+renumeración aplicada y los criterios nuevos del 11 al 16. **32 criterios.**
+
+| Archivo | Para qué |
+|---|---|
+| [Matriz_Validacion_Actualizada](Matriz_Validacion_Actualizada_3406211.pdf) | En blanco, para que la diligencie el instructor |
+| [Matriz_Validacion_Diligenciada](Matriz_Validacion_Diligenciada_3406211.pdf) | Autoevaluación del aprendiz, con la evidencia de cada criterio |
+
+En la diligenciada hay **30 de 32 criterios marcados**. Los dos que quedan sin
+marcar no se pueden autoevaluar: el manual técnico, pendiente de entrega, y la
+sustentación oral. El resultado general y las firmas quedan en blanco en las dos
+versiones.
+
+Las dos se regeneran con:
 
 ```bash
 backend-fastapi/.venv/Scripts/python.exe docs/generar_matriz.py
@@ -43,7 +57,7 @@ backend-fastapi/.venv/Scripts/python.exe docs/generar_matriz.py
 
 ## Las pruebas
 
-92 pruebas automáticas, sobre SQLite en memoria. No hace falta MySQL encendido
+96 pruebas automáticas, sobre SQLite en memoria. No hace falta MySQL encendido
 ni conexión a Neon.
 
 ```bash
@@ -53,7 +67,7 @@ cd backend-fastapi
 
 | Archivo | Qué cubre | Pruebas |
 |---|---|---|
-| `test_autenticacion.py` | Registro, login con JWT, autorización por rol | 22 |
+| `test_autenticacion.py` | Registro, login con JWT, autorización por rol, recuperación | 26 |
 | `test_catalogo_crud.py` | CRUD completo, validación de esquemas, filtros y paginación | 19 |
 | `test_inyeccion_sql.py` | Las dos formas de defensa, contra los tres motores | 24 |
 | `test_pasarela_de_pago.py` | Luhn, cobro, factura, PDF y datos sensibles | 27 |

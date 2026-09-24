@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.configuracion import configuracion
@@ -33,6 +33,23 @@ MENSAJE_RECUPERACION = (
     "Si el correo corresponde a una cuenta activa, te enviamos un código de "
     "seis dígitos. Revisa tu bandeja de entrada."
 )
+
+
+async def _enviar_en_segundo_plano(
+    destinatario: str, nombre: str, codigo: str, enlace: str
+) -> None:
+    """Envía el correo de recuperación una vez ya contestada la petición.
+
+    Se traga cualquier fallo a propósito. Para cuando esto se ejecuta, la
+    respuesta ya viajó al navegador y no hay forma de avisar al usuario; lo
+    único sensato es dejarlo en el log para el operador. Y tampoco se le
+    contaría: decirle «no pudimos enviarte el correo» confirmaría que esa
+    dirección tiene cuenta.
+    """
+    try:
+        await enviar_recuperacion(destinatario, nombre, codigo, enlace)
+    except (ErrorAlEnviarCorreo, OSError):
+        logger.exception("Falló el envío del correo de recuperación en segundo plano")
 
 
 @router.post(
@@ -102,7 +119,11 @@ async def usuario_autenticado(usuario: UsuarioActual):
     summary="Solicitar recuperación de contraseña",
     description="Genera un enlace de un solo uso y lo envía al correo indicado.",
 )
-async def solicitar_recuperacion(sesion: SesionDep, datos: SolicitudRecuperacion):
+async def solicitar_recuperacion(
+    sesion: SesionDep,
+    datos: SolicitudRecuperacion,
+    tareas: BackgroundTasks,
+):
     usuario = await crud_usuarios.obtener_por_email(sesion, datos.email)
 
     if usuario is None or not usuario.activo:
@@ -121,17 +142,20 @@ async def solicitar_recuperacion(sesion: SesionDep, datos: SolicitudRecuperacion
     codigo, token = emitido
     enlace = f"{configuracion.url_frontend}/restablecer?token={token}"
 
-    try:
-        enviado = await enviar_recuperacion(
-            usuario.email, usuario.nombre, codigo, enlace
-        )
-    except ErrorAlEnviarCorreo:
-        # El código ya está creado; el operador ve el fallo en el log.
-        enviado = False
+    # El correo se manda en segundo plano. Hablar con Gmail tarda entre dos y
+    # cinco segundos, y no hay ninguna razón para que el usuario los espere
+    # mirando un botón girando: el código ya está creado y guardado, así que la
+    # respuesta puede salir ya.
+    #
+    # BackgroundTasks ejecuta la tarea DESPUÉS de enviar la respuesta, en el
+    # mismo proceso. Encaja aquí porque el envío es corto y porque, si falla,
+    # no hay nada que deshacer: el usuario puede volver a pedir otro código.
+    tareas.add_task(_enviar_en_segundo_plano, usuario.email, usuario.nombre, codigo, enlace)
 
-    # En desarrollo, si el correo no salió, se devuelven el código y el enlace
-    # para poder probar el flujo. En producción esto nunca se expone.
-    if not enviado and configuracion.entorno == "desarrollo":
+    # Sin servidor SMTP configurado no va a llegar ningún correo, así que en
+    # desarrollo se devuelven el código y el enlace para poder probar el flujo
+    # igualmente. En producción esto no se expone nunca.
+    if not configuracion.correo_configurado and configuracion.entorno == "desarrollo":
         return MensajeSimple(
             mensaje=MENSAJE_RECUPERACION,
             enlace_recuperacion=enlace,

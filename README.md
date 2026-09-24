@@ -646,7 +646,7 @@ frontend y lo sirve él mismo.
 
 ## Pruebas automáticas
 
-92 pruebas con **Pytest**, sobre una base SQLite en memoria: no hace falta tener
+96 pruebas con **Pytest**, sobre una base SQLite en memoria: no hace falta tener
 MySQL encendido ni conexión a Neon, y no usan ningún secreto.
 
 ```bash
@@ -656,7 +656,7 @@ cd backend-fastapi
 
 | Archivo | Qué cubre | Pruebas |
 |---|---|---|
-| `test_autenticacion.py` | Registro, login con JWT, autorización por rol | 22 |
+| `test_autenticacion.py` | Registro, login con JWT, autorización por rol, recuperación | 26 |
 | `test_catalogo_crud.py` | CRUD completo, validación de esquemas, filtros y paginación | 19 |
 | `test_inyeccion_sql.py` | Defensa contra inyección SQL, contra los tres motores | 24 |
 | `test_pasarela_de_pago.py` | Luhn, cobro, factura, PDF y datos sensibles | 27 |
@@ -674,6 +674,7 @@ En [`docs/`](docs/README.md) están los documentos de sustentación:
 
 | | |
 |---|---|
+| [Comparativa FastAPI vs Django REST](docs/10-comparativa-fastapi-django.md) | Por qué FastAPI, y dónde Django habría ganado |
 | [Integración y despliegue continuo](docs/12-integracion-y-despliegue-continuo.md) | Cómo se prueba y se despliega cada cambio |
 | [Pasarela de pago](docs/13-pasarela-de-pago.md) | Cómo se cobra y qué no se guarda nunca |
 | [Normalización de la base de datos](docs/14-normalizacion-base-de-datos.md) | 1FN, 2FN y 3FN sobre las 18 tablas |
